@@ -9,6 +9,7 @@ import {
   useUserProviderAndSigner,
 } from "eth-hooks";
 import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
+import { useEventListener } from "eth-hooks/events/";
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, Route, Switch, useLocation } from "react-router-dom";
 import "./App.css";
@@ -29,7 +30,13 @@ import externalContracts from "./contracts/external_contracts";
 // contracts
 import deployedContracts from "./contracts/hardhat_contracts.json";
 import { Transactor, Web3ModalSetup } from "./helpers";
-import { Home, ExampleUI, Hints, Subgraph } from "./views";
+import {
+  Home,
+  ExampleUI,
+  Hints,
+  Subgraph,
+  CreateTransaction,
+} from "./views";
 import { useStaticJsonRPC } from "./hooks";
 
 const { ethers } = require("ethers");
@@ -81,6 +88,8 @@ function App(props) {
   const location = useLocation();
 
   const targetNetwork = NETWORKS[selectedNetwork];
+
+  const poolServerUrl = "http://localhost:49832/";
 
   // 🔭 block explorer URL
   const blockExplorer = targetNetwork.blockExplorer;
@@ -151,6 +160,13 @@ function App(props) {
   // If you want to make 🔐 write transactions to your contracts, use the userSigner:
   const writeContracts = useContractLoader(userSigner, contractConfig, localChainId);
 
+  const contractName = "MultiSigWallet";
+  const contractAddress = readContracts?.MultiSigWallet?.address;
+
+  //📟 Listen for broadcast events
+  const executeTransactionEvents = useEventListener(readContracts, contractName, "ExecuteTransaction", localProvider, 1);
+  if(DEBUG) console.log("📟 executeTransactionEvents:",executeTransactionEvents);
+
   // EXTERNAL CONTRACT EXAMPLE:
   //
   // If you want to bring in the mainnet DAI contract it would look like:
@@ -168,6 +184,12 @@ function App(props) {
 
   // keep track of a variable from the contract in the local React state:
   const purpose = useContractReader(readContracts, "YourContract", "purpose");
+
+  const signaturesRequired = useContractReader(readContracts, contractName, "signaturesRequired")
+  if (DEBUG) console.log("✳️ signaturesRequired:", signaturesRequired);
+
+  const nonce = useContractReader(readContracts, contractName, "nonce")
+  if (DEBUG) console.log("✳️ nonce:", signaturesRequired);
 
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
@@ -258,39 +280,49 @@ function App(props) {
       />
       <Menu style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
         <Menu.Item key="/">
-          <Link to="/">App Home</Link>
+          <Link to="/">Your MultiSig</Link>
+        </Menu.Item>
+        <Menu.Item key="/create">
+          <Link to="/create">Propose Transaction</Link>
         </Menu.Item>
         <Menu.Item key="/debug">
           <Link to="/debug">Debug Contracts</Link>
-        </Menu.Item>
-        <Menu.Item key="/hints">
-          <Link to="/hints">Hints</Link>
-        </Menu.Item>
-        <Menu.Item key="/exampleui">
-          <Link to="/exampleui">ExampleUI</Link>
-        </Menu.Item>
-        <Menu.Item key="/mainnetdai">
-          <Link to="/mainnetdai">Mainnet DAI</Link>
-        </Menu.Item>
-        <Menu.Item key="/subgraph">
-          <Link to="/subgraph">Subgraph</Link>
         </Menu.Item>
       </Menu>
 
       <Switch>
         <Route exact path="/">
-          {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
-          <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} />
+          <Home
+            contractAddress={contractAddress}
+            localProvider={localProvider}
+            price={price}
+            mainnetProvider={mainnetProvider}
+            blockExplorer={blockExplorer}
+            executeTransactionEvents={executeTransactionEvents}
+            contractName={contractName}
+            readContracts={readContracts}
+          />
+        </Route>
+        <Route path="/create">
+          <CreateTransaction
+            poolServerUrl={poolServerUrl}
+            contractName={contractName}
+            contractAddress={contractAddress}
+            mainnetProvider={mainnetProvider}
+            localProvider={localProvider}
+            price={price}
+            tx={tx}
+            readContracts={readContracts}
+            userSigner={userSigner}
+            DEBUG={DEBUG}
+            nonce={nonce}
+            blockExplorer={blockExplorer}
+            signaturesRequired={signaturesRequired}
+          />
         </Route>
         <Route exact path="/debug">
-          {/*
-                🎛 this scaffolding is full of commonly used components
-                this <Contract/> component will automatically parse your ABI
-                and give you a form to interact with it locally
-            */}
-
           <Contract
-            name="YourContract"
+            name={contractName}
             price={price}
             signer={userSigner}
             provider={localProvider}
