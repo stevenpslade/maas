@@ -168,6 +168,9 @@ function App(props) {
   const executeTransactionEvents = useEventListener(readContracts, contractName, "ExecuteTransaction", localProvider, 1);
   if(DEBUG) console.log("📟 executeTransactionEvents:",executeTransactionEvents);
 
+  const ownerEvents = useEventListener(readContracts, contractName, "Owner", localProvider, 1);
+  if(DEBUG) console.log("📟 ownerEvents:", ownerEvents);
+
   // EXTERNAL CONTRACT EXAMPLE:
   //
   // If you want to bring in the mainnet DAI contract it would look like:
@@ -305,6 +308,8 @@ function App(props) {
             executeTransactionEvents={executeTransactionEvents}
             contractName={contractName}
             readContracts={readContracts}
+            ownerEvents={ownerEvents}
+            signaturesRequired={signaturesRequired}
           />
         </Route>
         <Route path="/create">

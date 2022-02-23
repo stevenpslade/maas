@@ -1,7 +1,7 @@
 import React from "react";
-import { Balance, Address, TransactionListItem } from "../components";
+import { Balance, Address, TransactionListItem, Owners } from "../components";
 import QR from "qrcode.react";
-import { List } from "antd";
+import { List, Row, Col, } from "antd";
 
 export default function Home({
   contractAddress,
@@ -11,50 +11,63 @@ export default function Home({
   blockExplorer,
   executeTransactionEvents,
   contractName,
-  readContracts
+  readContracts,
+  ownerEvents,
+  signaturesRequired,
 }) {
-
   return (
-    <div style={{ padding: 32, maxWidth: 750, margin: "auto" }}>
-      <div style={{ paddingBottom: 32 }}>
-        <div>
-          <Balance
-            address={contractAddress ? contractAddress : ""}
-            provider={localProvider}
-            dollarMultiplier={price}
-            size={64}
-          />
+    <Row>
+      <Col span={12} offset={3}>
+      <div style={{ padding: 32, maxWidth: 750, margin: "auto" }}>
+        <div style={{ paddingBottom: 32 }}>
+          <div>
+            <Balance
+              address={contractAddress ? contractAddress : ""}
+              provider={localProvider}
+              dollarMultiplier={price}
+              size={64}
+            />
+          </div>
+          <div>
+            <QR
+              value={contractAddress ? contractAddress.toString() : ""}
+              size="180"
+              level="H"
+              includeMargin
+              renderAs="svg"
+              imageSettings={{ excavate: false }}
+            />
+          </div>
+          <div>
+            <Address
+              address={contractAddress ? contractAddress : ""}
+              ensProvider={mainnetProvider}
+              blockExplorer={blockExplorer}
+              fontSize={32}
+            />
+          </div>
         </div>
-        <div>
-          <QR
-            value={contractAddress ? contractAddress.toString() : ""}
-            size="180"
-            level="H"
-            includeMargin
-            renderAs="svg"
-            imageSettings={{ excavate: false }}
-          />
-        </div>
-        <div>
-          <Address
-            address={contractAddress ? contractAddress : ""}
-            ensProvider={mainnetProvider}
-            blockExplorer={blockExplorer}
-            fontSize={32}
-          />
-        </div>
+        <List
+          bordered
+          dataSource={executeTransactionEvents}
+          renderItem={item => {
+            return (
+              <TransactionListItem
+                item={item}
+                mainnetProvider={mainnetProvider}
+                blockExplorer={blockExplorer}
+                price={price}
+                readContracts={readContracts}
+                contractName={contractName}
+              />
+            );
+          }}
+        />
       </div>
-      <List
-        bordered
-        dataSource={executeTransactionEvents}
-        renderItem={item => {
-          return (
-            <>
-              <TransactionListItem item={item} mainnetProvider={mainnetProvider} blockExplorer={blockExplorer} price={price} readContracts={readContracts} contractName={contractName} />
-            </>
-          );
-        }}
-      />
-    </div>
+      </Col>
+      <Col span={6}>
+          <Owners ownerEvents={ownerEvents} signaturesRequired={signaturesRequired} mainnetProvider={mainnetProvider} blockExplorer={blockExplorer} />
+      </Col>
+    </Row>
   );
 }
