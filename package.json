@@ -52,7 +52,8 @@
     "deploy-and-graph": "yarn deploy && yarn graph-ship-local",
     "theme": "yarn workspace @scaffold-eth/react-app theme",
     "watch-theme": "yarn workspace @scaffold-eth/react-app watch",
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "backend": "cd packages/backend && node index"
   },
   "workspaces": {
     "packages": [
@@ -69,6 +70,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "husky": "^7.0.2"
+    "husky": "^7.0.2",
+    "cors": "^2.8.5"
   }
 }
