@@ -36,6 +36,7 @@ import {
   Hints,
   Subgraph,
   CreateTransaction,
+  Transactions,
 } from "./views";
 import { useStaticJsonRPC } from "./hooks";
 
@@ -285,6 +286,9 @@ function App(props) {
         <Menu.Item key="/create">
           <Link to="/create">Propose Transaction</Link>
         </Menu.Item>
+        <Menu.Item key="/pool">
+          <Link to="/pool">Pool</Link>
+        </Menu.Item>
         <Menu.Item key="/debug">
           <Link to="/debug">Debug Contracts</Link>
         </Menu.Item>
@@ -317,6 +321,24 @@ function App(props) {
             DEBUG={DEBUG}
             nonce={nonce}
             blockExplorer={blockExplorer}
+            signaturesRequired={signaturesRequired}
+          />
+        </Route>
+        <Route path="/pool">
+          <Transactions
+            poolServerUrl={poolServerUrl}
+            contractName={contractName}
+            address={address}
+            userSigner={userSigner}
+            mainnetProvider={mainnetProvider}
+            localProvider={localProvider}
+            yourLocalBalance={yourLocalBalance}
+            price={price}
+            tx={tx}
+            writeContracts={writeContracts}
+            readContracts={readContracts}
+            blockExplorer={blockExplorer}
+            nonce={nonce}
             signaturesRequired={signaturesRequired}
           />
         </Route>

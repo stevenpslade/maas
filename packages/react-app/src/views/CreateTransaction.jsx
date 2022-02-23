@@ -38,20 +38,25 @@ export default function CreateTransaction({
   const createTransaction = async () => {
     try {
       setLoading(true)
-      let callData;
-      callData = methodName == "transferFunds" ? "0x" :
-        readContracts[contractName]?.interface?.encodeFunctionData(methodName, [to, newSignaturesRequired]);
 
-      console.log("callData: ", callData);
+      let callData;
+      let executeToAddress;
+      if (methodName == "transferFunds") {
+        callData = "0x";
+        executeToAddress = to;
+      } else {
+        callData = readContracts[contractName]?.interface?.encodeFunctionData(methodName, [to, newSignaturesRequired]);
+        executeToAddress = contractAddress;
+      }
 
       const newHash = await readContracts[contractName].getTransactionHash(
         nonce,
-        callData == "0x" ? to : contractAddress,
+        executeToAddress,
         parseEther("" + parseFloat(amount).toFixed(12)),
         callData,
       );
 
-      const signature = await userSigner?.signMessage(ethers.utils.arrayify(newHash))
+      const signature = await userSigner?.signMessage(ethers.utils.arrayify(newHash));
       console.log("signature: ", signature);
 
       const recover = await readContracts[contractName].recover(newHash, signature);
@@ -64,8 +69,8 @@ export default function CreateTransaction({
         const res = await axios.post(poolServerUrl, {
           chainId: localProvider._network.chainId,
           address: readContracts[contractName]?.address,
-          nonce: nonce,
-          to,
+          nonce: nonce.toNumber(),
+          to: executeToAddress,
           amount,
           data: callData,
           hash: newHash,

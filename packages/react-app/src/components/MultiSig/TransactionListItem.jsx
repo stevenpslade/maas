@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, List } from "antd";
 
 import { Address, Balance, Blockie } from "..";
-import * as TransactionDetailsModal from "./TransactionDetailsModal";
+import TransactionDetailsModal from "./TransactionDetailsModal";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { parseEther, formatEther } from "@ethersproject/units";
 
@@ -18,15 +18,14 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
     setIsModalVisible(false);
   };
 
-
-  console.log("🔥🔥🔥🔥🔥🔥🔥🔥", item)
   let txnData;
   try {
     // TODO: this might be fine but also try getting name from external contracts
-    item.data != "0x" ? txnData = readContracts[contractName].interface.parseTransaction(item) : txnData = "";
+    txnData = item.data != "0x" ? readContracts[contractName].interface.parseTransaction(item) : null;
   } catch (error) {
     console.log("ERROR", error)
   }
+
   return <>
     <TransactionDetailsModal
       visible={isModalVisible}
@@ -51,14 +50,14 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
         <p>
           <b>Event Name :&nbsp;</b>
           {/* TODO: Change the below */}
-          {txnData != "" ? txnData?.functionFragment?.name : "Transfer Funds"}&nbsp;
+          {txnData ? txnData.functionFragment?.name : "Transfer Funds"}&nbsp;
         </p>
         <p>
           <b>Addressed to :&nbsp;</b>
-          {txnData != "" ? txnData?.args[0] : item?.to}
+          {txnData ? txnData.args[0] : item?.to}
         </p>
       </div>
-      {<b style={{ padding: 16 }}>#{typeof (item.nonce) === "number" ? item.nonce : item.nonce.toNumber()}</b>}
+      {<b style={{ padding: 16 }}>#{item.nonce}</b>}
       <span>
         <Blockie size={4} scale={8} address={item.hash} /> {item.hash.substr(0, 6)}
       </span>
