@@ -50,7 +50,7 @@ export default function CreateTransaction({
       }
 
       const newHash = await readContracts[contractName].getTransactionHash(
-        nonce,
+        nonce.toNumber(),
         executeToAddress,
         parseEther("" + parseFloat(amount).toFixed(12)),
         callData,

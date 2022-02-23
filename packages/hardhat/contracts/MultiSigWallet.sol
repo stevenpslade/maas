@@ -78,9 +78,9 @@ contract MultiSigWallet {
       onlyOwner
       returns (bytes memory)
   {
-    nonce++;
-
     bytes32 _hash =  getTransactionHash(nonce, to, value, data);
+
+    nonce++;
 
     uint256 validSignatures;
     address duplicateGuard;

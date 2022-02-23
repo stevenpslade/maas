@@ -98,7 +98,7 @@ export default function Transactions({
           const hasSigned = item.signers.indexOf(address) >= 0;
           const hasEnoughSignatures = item.signatures.length <= signaturesRequired.toNumber();
 
-          console.log("glarbo: ", item);
+          console.log("transaction details:", item);
 
           return (
             <TransactionListItem
@@ -152,6 +152,8 @@ export default function Transactions({
                   );
 
                   const [finalSigList, finalSigners] = await getSortedSigList(item.signatures, newHash);
+
+                  console.log("writeContracts: ", item.to, parseEther("" + parseFloat(item.amount).toFixed(12)), item.data, finalSigList);
 
                   tx(
                     writeContracts[contractName].executeTransaction(

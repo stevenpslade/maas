@@ -7,6 +7,8 @@ import { EllipsisOutlined } from "@ant-design/icons";
 import { parseEther, formatEther } from "@ethersproject/units";
 
 export default function TransactionListItem({ item, mainnetProvider, blockExplorer, price, readContracts, contractName, children }) {
+  item = item.args ? item.args : item;
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [txnInfo, setTxnInfo] = useState(null);
 
@@ -57,7 +59,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
           {txnData ? txnData.args[0] : item?.to}
         </p>
       </div>
-      {<b style={{ padding: 16 }}>#{item.nonce}</b>}
+      {<b style={{ padding: 16 }}>#{typeof(item.nonce)=== "number" ? item.nonce : item.nonce.toNumber()}</b>}
       <span>
         <Blockie size={4} scale={8} address={item.hash} /> {item.hash.substr(0, 6)}
       </span>
