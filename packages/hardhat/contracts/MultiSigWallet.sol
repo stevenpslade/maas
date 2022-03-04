@@ -34,7 +34,7 @@ contract MultiSigWallet {
     _;
   }
 
-  constructor(uint256 _chainId, address[] memory _owners, uint _signaturesRequired) requireNonZeroSignatures(_signaturesRequired) {
+  constructor(uint256 _chainId, address[] memory _owners, uint _signaturesRequired) payable requireNonZeroSignatures(_signaturesRequired) {
     signaturesRequired = _signaturesRequired;
     for (uint i = 0; i < _owners.length; i++) {
       address owner = _owners[i];
