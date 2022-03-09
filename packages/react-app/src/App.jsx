@@ -1,4 +1,12 @@
-import { Button, Col, Menu, Row } from "antd";
+import {
+  Button,
+  Col,
+  Menu,
+  Row,
+  Alert,
+  Dropdown,
+} from "antd";
+import { DownOutlined } from '@ant-design/icons';
 import "antd/dist/antd.css";
 import {
   useBalance,
@@ -24,9 +32,11 @@ import {
   NetworkDisplay,
   FaucetHint,
   NetworkSwitch,
+  CreateMultiSigModal,
 } from "./components";
 import { NETWORKS, ALCHEMY_KEY } from "./constants";
 import externalContracts from "./contracts/external_contracts";
+import multiSigWalletABI from "./contracts/multi_sig_wallet";
 // contracts
 import deployedContracts from "./contracts/hardhat_contracts.json";
 import { Transactor, Web3ModalSetup } from "./helpers";
@@ -157,12 +167,15 @@ function App(props) {
 
   // Load in your local 📝 contract and read a value from it:
   const readContracts = useContractLoader(localProvider, contractConfig);
+  // const readContracts = {
+  //   MultiSigWallet: new ethers.Contract("0xa16E02E87b7454126E5E10d957A927A7F5B5d2be", multiSigWalletABI, localProvider),
+  // };
 
   // If you want to make 🔐 write transactions to your contracts, use the userSigner:
   const writeContracts = useContractLoader(userSigner, contractConfig, localChainId);
 
-  const contractName = "MultiSigWallet";
-  const contractAddress = readContracts?.MultiSigWallet?.address;
+  const contractName = "MultiSigFactory";
+  const contractAddress = readContracts?.MultiSigFactory?.address;
 
   //📟 Listen for broadcast events
   const executeTransactionEvents = useEventListener(readContracts, contractName, "ExecuteTransaction", localProvider, 1);
@@ -270,9 +283,31 @@ function App(props) {
 
   const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf("local") !== -1;
 
+  const userHasMultiSigs = false;
+
+  const menu = (
+    <Menu>
+      <Menu.Item>
+        <a target="_blank" rel="noopener noreferrer" href="https://www.antgroup.com">
+          1st menu item
+        </a>
+      </Menu.Item>
+      <Menu.Item icon={<DownOutlined />} disabled>
+        <a target="_blank" rel="noopener noreferrer" href="https://www.aliyun.com">
+          2nd menu item (disabled)
+        </a>
+      </Menu.Item>
+      <Menu.Item disabled>
+        <a target="_blank" rel="noopener noreferrer" href="https://www.luohanacademy.com">
+          3rd menu item (disabled)
+        </a>
+      </Menu.Item>
+      <Menu.Item danger>a danger item</Menu.Item>
+    </Menu>
+  );
+
   return (
     <div className="App">
-      {/* ✏️ Edit the header and change the title to your project name */}
       <Header />
       <NetworkDisplay
         NETWORKCHECK={NETWORKCHECK}
@@ -282,35 +317,61 @@ function App(props) {
         logoutOfWeb3Modal={logoutOfWeb3Modal}
         USE_NETWORK_SELECTOR={USE_NETWORK_SELECTOR}
       />
-      <Menu style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
-        <Menu.Item key="/">
-          <Link to="/">Your MultiSig</Link>
-        </Menu.Item>
-        <Menu.Item key="/create">
-          <Link to="/create">Propose Transaction</Link>
-        </Menu.Item>
-        <Menu.Item key="/pool">
-          <Link to="/pool">Pool</Link>
-        </Menu.Item>
-        <Menu.Item key="/debug">
-          <Link to="/debug">Debug Contracts</Link>
-        </Menu.Item>
-      </Menu>
+      <div style={{ position: "relative" }}>
+        <div style={{ position: "absolute", left: 20 }}>
+          <CreateMultiSigModal
+            price={price}
+            selectedChainId={selectedChainId}
+            mainnetProvider={mainnetProvider}
+            address={address}
+            tx={tx}
+            writeContracts={writeContracts}
+            contractName={contractName}
+          />
+          <Dropdown overlay={menu}>
+            <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+              Select Multi-Sig <DownOutlined />
+            </a>
+          </Dropdown>
+        </div>
+        <Menu disabled={!userHasMultiSigs} style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
+          <Menu.Item key="/">
+            <Link to="/">Your MultiSig</Link>
+          </Menu.Item>
+          <Menu.Item key="/create">
+            <Link to="/create">Propose Transaction</Link>
+          </Menu.Item>
+          <Menu.Item key="/pool">
+            <Link to="/pool">Pool</Link>
+          </Menu.Item>
+          <Menu.Item key="/debug">
+            <Link to="/debug">Debug Contracts</Link>
+          </Menu.Item>
+        </Menu>
+      </div>
 
       <Switch>
         <Route exact path="/">
-          <Home
-            contractAddress={contractAddress}
-            localProvider={localProvider}
-            price={price}
-            mainnetProvider={mainnetProvider}
-            blockExplorer={blockExplorer}
-            executeTransactionEvents={executeTransactionEvents}
-            contractName={contractName}
-            readContracts={readContracts}
-            ownerEvents={ownerEvents}
-            signaturesRequired={signaturesRequired}
-          />
+          {!userHasMultiSigs ?
+            <Row style={{ marginTop: 40 }}>
+              <Col span={12} offset={6}>
+                <Alert message="✨ Create or select your Multi-Sig ✨" type="info" />
+              </Col>
+            </Row>
+          :
+            <Home
+              contractAddress={contractAddress}
+              localProvider={localProvider}
+              price={price}
+              mainnetProvider={mainnetProvider}
+              blockExplorer={blockExplorer}
+              executeTransactionEvents={executeTransactionEvents}
+              contractName={contractName}
+              readContracts={readContracts}
+              ownerEvents={ownerEvents}
+              signaturesRequired={signaturesRequired}
+            />
+          }
         </Route>
         <Route path="/create">
           <CreateTransaction
@@ -349,7 +410,7 @@ function App(props) {
         </Route>
         <Route exact path="/debug">
           <Contract
-            name={contractName}
+            name={"MultiSigFactory"}
             price={price}
             signer={userSigner}
             provider={localProvider}

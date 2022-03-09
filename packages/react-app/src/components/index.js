@@ -26,3 +26,4 @@ export { default as TokenSelect } from "./TokenSelect";
 
 export { default as TransactionListItem } from "./MultiSig/TransactionListItem";
 export { default as Owners } from "./MultiSig/Owners";
+export { default as CreateMultiSigModal } from "./MultiSig/CreateMultiSigModal";

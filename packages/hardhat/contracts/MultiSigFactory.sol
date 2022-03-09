@@ -6,6 +6,14 @@ import "./MultiSigWallet.sol";
 contract MultiSigFactory {
   MultiSigWallet[] public multiSigs;
 
+  event Create(
+    uint indexed contractId,
+    address indexed conractAddress,
+    address creator,
+    address[] owners,
+    uint signaturesRequired
+  );
+
   constructor() {}
 
   function create(
@@ -13,8 +21,12 @@ contract MultiSigFactory {
     address[] memory _owners,
     uint _signaturesRequired
   ) public payable {
+    uint id = numberOfMultiSigs();
+
     MultiSigWallet multiSig = (new MultiSigWallet){value: msg.value}(_chainId, _owners, _signaturesRequired);
     multiSigs.push(multiSig);
+
+    emit Create(id, address(multiSig), msg.sender, _owners, _signaturesRequired);
   }
 
   function numberOfMultiSigs() public view returns(uint) {
