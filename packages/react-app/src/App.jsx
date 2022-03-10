@@ -167,22 +167,56 @@ function App(props) {
 
   // Load in your local 📝 contract and read a value from it:
   const readContracts = useContractLoader(localProvider, contractConfig);
-  // const readContracts = {
-  //   MultiSigWallet: new ethers.Contract("0xa16E02E87b7454126E5E10d957A927A7F5B5d2be", multiSigWalletABI, localProvider),
-  // };
 
   // If you want to make 🔐 write transactions to your contracts, use the userSigner:
   const writeContracts = useContractLoader(userSigner, contractConfig, localChainId);
 
-  const contractName = "MultiSigFactory";
-  const contractAddress = readContracts?.MultiSigFactory?.address;
+  // const [readContracts, setReadContracts] = useState(readContractsSetup);
+
+  const contractName = "MultiSigWallet";
+  const contractAddress = readContracts?.MultiSigWallet?.address;
+
+  // TODO: 🪄 ✨ 🪄 ✨🪄 ✨
+  // ---------------------
+  // ** When user address is detected in Create event, update backend
+  // ** check if contractId is present in backend, if not add
+  // e.g. createEventContractIds.difference(backendIds) = <array of ids not in backend to add>
+  // User could manually remove multisigs if they are no longer an owner (let them do it incase they want to watch it)
 
   //📟 Listen for broadcast events
-  const executeTransactionEvents = useEventListener(readContracts, contractName, "ExecuteTransaction", localProvider, 1);
-  if(DEBUG) console.log("📟 executeTransactionEvents:",executeTransactionEvents);
 
-  const ownerEvents = useEventListener(readContracts, contractName, "Owner", localProvider, 1);
-  if(DEBUG) console.log("📟 ownerEvents:", ownerEvents);
+  // MultiSigFactory Events:
+  const createMultiSigEvents = useEventListener(readContracts, "MultiSigFactory", "Create", localProvider, 1);
+  if(DEBUG) console.log("📟 createMultiSigEvents:", createMultiSigEvents);
+
+  const [multiSigAddress, setMultiSigAddress] = useState();
+
+  useEffect(() => {
+    if (address) {
+      const multiSigsForUser = createMultiSigEvents.filter(createEvent => {
+        return createEvent.args.owners.includes(address);
+      }).map(createEvent => createEvent.args.contractAddress);
+
+      const multiSigAddress = multiSigsForUser[0];
+      if (multiSigAddress) {
+        setMultiSigAddress(multiSigAddress);
+      }
+    }
+  }, [createMultiSigEvents, address]);
+
+  useEffect(() => {
+    if (multiSigAddress) {
+      readContracts.MultiSigWallet = new ethers.Contract(multiSigAddress, multiSigWalletABI, localProvider);
+      writeContracts.MultiSigWallet = new ethers.Contract(multiSigAddress, multiSigWalletABI, userSigner);
+    }
+  }, [multiSigAddress]);
+
+  // MultiSigWallet Events:
+  const executeTransactionEvents = useEventListener(multiSigAddress ? readContracts : null, contractName, "ExecuteTransaction", localProvider, 1);
+  if(DEBUG) console.log("📟 executeTransactionEvents:", executeTransactionEvents);
+
+  const ownerEvents = useEventListener(multiSigAddress ? readContracts : null, contractName, "Owner", localProvider, 1);
+  if(DEBUG) console.log("📟 ownerEvents:", ownerEvents, readContracts);
 
   // EXTERNAL CONTRACT EXAMPLE:
   //
@@ -283,7 +317,7 @@ function App(props) {
 
   const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf("local") !== -1;
 
-  const userHasMultiSigs = false;
+  const userHasMultiSigs = true;
 
   const menu = (
     <Menu>
@@ -326,7 +360,7 @@ function App(props) {
             address={address}
             tx={tx}
             writeContracts={writeContracts}
-            contractName={contractName}
+            contractName={'MultiSigFactory'}
           />
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>

@@ -146,14 +146,6 @@ export default function CreateMultiSigModal({
     }
   };
 
-  // TODO:
-  // ------
-  // * On main page watch for Create event
-  // ** When user address is detected in Create event, update backend
-  // ** check if contractId is present in backend, if not add
-  // e.g. createEventContractIds.difference(backendIds) = <array of ids not in backend to add>
-  // User could manually remove multisigs if they are no longer an owner (let them do it incase they want to watch it)
-
   return (
     <>
       <Button type="primary" style={{ marginRight: 10 }} onClick={showCreateModal}>Create</Button>

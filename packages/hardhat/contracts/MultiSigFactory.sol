@@ -8,7 +8,7 @@ contract MultiSigFactory {
 
   event Create(
     uint indexed contractId,
-    address indexed conractAddress,
+    address indexed contractAddress,
     address creator,
     address[] owners,
     uint signaturesRequired
