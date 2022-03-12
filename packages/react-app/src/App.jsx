@@ -201,7 +201,7 @@ function App(props) {
       }).map(createEvent => createEvent.args.contractAddress);
 
       if (multiSigsForUser.length > 0) {
-        // setCurrentMultiSigAddress(multiSigsForUser[0]);
+        setCurrentMultiSigAddress(multiSigsForUser[multiSigsForUser.length - 1]);
         setMultiSigs(multiSigsForUser);
       }
     }
@@ -372,7 +372,7 @@ function App(props) {
             writeContracts={writeContracts}
             contractName={'MultiSigFactory'}
           />
-          <Select style={{ width: 120 }} onChange={handleMultiSigChange}>
+          <Select value={[currentMultiSigAddress]} style={{ width: 120 }} onChange={handleMultiSigChange}>
             {multiSigs.map((address, index) => (
               <Option key={index} value={address}>{address}</Option>
             ))}
