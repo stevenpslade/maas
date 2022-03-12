@@ -33,8 +33,11 @@ export default function Transactions({
         poolServerUrl + readContracts[contractName].address + "_" + localProvider._network.chainId,
       );
 
+      console.log("backend stuff res", res.data);
+
       const newTransactions = [];
       for (const i in res.data) {
+        console.log("backend stuff res.data[i]", res.data[i]);
         const thisNonce = ethers.BigNumber.from(res.data[i].nonce);
         if (thisNonce && nonce && thisNonce.gte(nonce)) {
           const validSignatures = [];
@@ -50,6 +53,8 @@ export default function Transactions({
           newTransactions.push(update);
         }
       }
+
+      console.log("backend stuff newTransactions", newTransactions);
 
       setTransactions(newTransactions);
     };

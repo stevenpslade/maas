@@ -178,10 +178,11 @@ function App(props) {
 
   // TODO: 🪄 ✨ 🪄 ✨🪄 ✨
   // ---------------------
-  // * State change after new multisig is selected
+  // ** Events update when new block and multiSigAddress change
   // * When user address is detected in Create event, update backend
   // ** check if contractId is present in backend, if not add
   // e.g. createEventContractIds.difference(backendIds) = <array of ids not in backend to add>
+  // * Mobile friendly! (maybe)
   // User could manually remove multisigs if they are no longer an owner (let them do it incase they want to watch it)
 
   //📟 Listen for broadcast events
@@ -209,6 +210,15 @@ function App(props) {
   const [signaturesRequired, setSignaturesRequired] = useState(0);
   const [nonce, setNonce] = useState(0);
 
+  const signaturesRequiredContract = useContractReader(readContracts, contractName, "signaturesRequired");
+  const nonceContract = useContractReader(readContracts, contractName, "nonce");
+  useEffect(() => {
+    setSignaturesRequired(signaturesRequiredContract);
+    setNonce(nonceContract);
+  }, [signaturesRequiredContract, nonceContract]);
+
+  const [contractNameForEvent, setContractNameForEvent] = useState();
+
   useEffect(() => {
     async function getContractValues() {
       const signaturesRequired = await readContracts.MultiSigWallet.signaturesRequired();
@@ -222,16 +232,25 @@ function App(props) {
       readContracts.MultiSigWallet = new ethers.Contract(currentMultiSigAddress, multiSigWalletABI, localProvider);
       writeContracts.MultiSigWallet = new ethers.Contract(currentMultiSigAddress, multiSigWalletABI, userSigner);
 
+      setContractNameForEvent("MultiSigWallet");
       getContractValues();
     }
   }, [currentMultiSigAddress, readContracts, writeContracts]);
 
   // MultiSigWallet Events:
-  const executeTransactionEvents = useEventListener(currentMultiSigAddress ? readContracts : null, contractName, "ExecuteTransaction", localProvider, 1);
-  if(DEBUG) console.log("📟 executeTransactionEvents:", executeTransactionEvents);
+  const allExecuteTransactionEvents = useEventListener(currentMultiSigAddress ? readContracts : null, contractNameForEvent, "ExecuteTransaction", localProvider, 1);
+  if(DEBUG) console.log("📟 executeTransactionEvents:", allExecuteTransactionEvents);
 
-  const ownerEvents = useEventListener(currentMultiSigAddress ? readContracts : null, contractName, "Owner", localProvider, 1);
-  if(DEBUG) console.log("📟 ownerEvents:", ownerEvents);
+  const allOwnerEvents = useEventListener(currentMultiSigAddress ? readContracts : null, contractNameForEvent, "Owner", localProvider, 1);
+  if(DEBUG) console.log("📟 ownerEvents:", allOwnerEvents);
+
+  const [ownerEvents, setOwnerEvents] = useState();
+  const [executeTransactionEvents, setExecuteTransactionEvents] = useState();
+
+  useEffect(() => {
+    setExecuteTransactionEvents(allExecuteTransactionEvents.filter( contractEvent => contractEvent.address === currentMultiSigAddress));
+    setOwnerEvents(allOwnerEvents.filter( contractEvent => contractEvent.address === currentMultiSigAddress));
+  }, [allExecuteTransactionEvents, allOwnerEvents, currentMultiSigAddress]);
 
   // EXTERNAL CONTRACT EXAMPLE:
   // If you want to bring in the mainnet DAI contract it would look like:
@@ -325,6 +344,7 @@ function App(props) {
   const userHasMultiSigs = currentMultiSigAddress ? true : false;
 
   const handleMultiSigChange = (value) => {
+    setContractNameForEvent(null);
     setCurrentMultiSigAddress(value);
   }
 

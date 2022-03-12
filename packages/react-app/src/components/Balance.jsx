@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useBalance } from "eth-hooks";
 import { BigNumber } from 'ethers';
 
 const { utils } = require("ethers");
@@ -33,8 +34,13 @@ const zero = BigNumber.from(0);
 export default function Balance(props) {
   const [dollarMode, setDollarMode] = useState(true);
   const [balance, setBalance] = useState();
-
   const {provider, address} = props;
+
+  const balanceContract = useBalance(props.provider, props.address);
+  useEffect(() => {
+    setBalance(balanceContract);
+  }, [balanceContract]);
+
   useEffect(() => {
     async function getBalance() {
       if (provider && address) {
