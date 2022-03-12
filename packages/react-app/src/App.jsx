@@ -178,7 +178,6 @@ function App(props) {
 
   // TODO: 🪄 ✨ 🪄 ✨🪄 ✨
   // ---------------------
-  // ** Events update when new block and multiSigAddress change
   // * When user address is detected in Create event, update backend
   // ** check if contractId is present in backend, if not add
   // e.g. createEventContractIds.difference(backendIds) = <array of ids not in backend to add>
@@ -201,6 +200,7 @@ function App(props) {
       }).map(createEvent => createEvent.args.contractAddress);
 
       if (multiSigsForUser.length > 0) {
+        setContractNameForEvent(null);
         setCurrentMultiSigAddress(multiSigsForUser[multiSigsForUser.length - 1]);
         setMultiSigs(multiSigsForUser);
       }
