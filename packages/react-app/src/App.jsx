@@ -206,10 +206,23 @@ function App(props) {
     }
   }, [createMultiSigEvents, address]);
 
+  const [signaturesRequired, setSignaturesRequired] = useState(0);
+  const [nonce, setNonce] = useState(0);
+
   useEffect(() => {
+    async function getContractValues() {
+      const signaturesRequired = await readContracts.MultiSigWallet.signaturesRequired();
+      setSignaturesRequired(signaturesRequired);
+
+      const nonce = await readContracts.MultiSigWallet.nonce();
+      setNonce(nonce);
+    }
+
     if (currentMultiSigAddress) {
       readContracts.MultiSigWallet = new ethers.Contract(currentMultiSigAddress, multiSigWalletABI, localProvider);
       writeContracts.MultiSigWallet = new ethers.Contract(currentMultiSigAddress, multiSigWalletABI, userSigner);
+
+      getContractValues();
     }
   }, [currentMultiSigAddress, readContracts, writeContracts]);
 
@@ -233,15 +246,6 @@ function App(props) {
   const myMainnetDAIBalance = useContractReader(mainnetContracts, "DAI", "balanceOf", [
     "0x34aA3F359A9D614239015126635CE7732c18fDF3",
   ]);
-
-  // keep track of a variable from the contract in the local React state:
-  const purpose = useContractReader(readContracts, "YourContract", "purpose");
-
-  const signaturesRequired = useContractReader(readContracts, contractName, "signaturesRequired")
-  if (DEBUG) console.log("✳️ signaturesRequired:", signaturesRequired);
-
-  const nonce = useContractReader(readContracts, contractName, "nonce")
-  if (DEBUG) console.log("✳️ nonce:", signaturesRequired);
 
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
@@ -445,20 +449,6 @@ function App(props) {
             yourLocalBalance={yourLocalBalance}
             mainnetProvider={mainnetProvider}
             price={price}
-          />
-        </Route>
-        <Route path="/exampleui">
-          <ExampleUI
-            address={address}
-            userSigner={userSigner}
-            mainnetProvider={mainnetProvider}
-            localProvider={localProvider}
-            yourLocalBalance={yourLocalBalance}
-            price={price}
-            tx={tx}
-            writeContracts={writeContracts}
-            readContracts={readContracts}
-            purpose={purpose}
           />
         </Route>
         <Route path="/mainnetdai">
