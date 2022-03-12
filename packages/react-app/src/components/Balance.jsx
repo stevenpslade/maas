@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { useBalance } from "eth-hooks";
+import React, { useState, useEffect } from "react";
+import { BigNumber } from 'ethers';
 
 const { utils } = require("ethers");
+const zero = BigNumber.from(0);
 
 /** 
   ~ What it does? ~
@@ -31,8 +32,21 @@ const { utils } = require("ethers");
 
 export default function Balance(props) {
   const [dollarMode, setDollarMode] = useState(true);
+  const [balance, setBalance] = useState();
 
-  const balance = useBalance(props.provider, props.address);
+  const {provider, address} = props;
+  useEffect(() => {
+    async function getBalance() {
+      if (provider && address) {
+        const newBalance = await provider.getBalance(address);
+        if (!newBalance.eq(balance ?? zero)) {
+          setBalance(newBalance);
+        }
+      }
+    }
+    getBalance();
+  }, [address, provider]);
+
   let floatBalance = parseFloat("0.00");
   let usingBalance = balance;
 

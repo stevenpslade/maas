@@ -4,9 +4,8 @@ import {
   Menu,
   Row,
   Alert,
-  Dropdown,
+  Select,
 } from "antd";
-import { DownOutlined } from '@ant-design/icons';
 import "antd/dist/antd.css";
 import {
   useBalance,
@@ -50,6 +49,7 @@ import {
 } from "./views";
 import { useStaticJsonRPC } from "./hooks";
 
+const { Option } = Select;
 const { ethers } = require("ethers");
 /*
     Welcome to 🏗 scaffold-eth !
@@ -178,7 +178,8 @@ function App(props) {
 
   // TODO: 🪄 ✨ 🪄 ✨🪄 ✨
   // ---------------------
-  // ** When user address is detected in Create event, update backend
+  // * State change after new multisig is selected
+  // * When user address is detected in Create event, update backend
   // ** check if contractId is present in backend, if not add
   // e.g. createEventContractIds.difference(backendIds) = <array of ids not in backend to add>
   // User could manually remove multisigs if they are no longer an owner (let them do it incase they want to watch it)
@@ -189,7 +190,8 @@ function App(props) {
   const createMultiSigEvents = useEventListener(readContracts, "MultiSigFactory", "Create", localProvider, 1);
   if(DEBUG) console.log("📟 createMultiSigEvents:", createMultiSigEvents);
 
-  const [multiSigAddress, setMultiSigAddress] = useState();
+  const [multiSigs, setMultiSigs] = useState([]);
+  const [currentMultiSigAddress, setCurrentMultiSigAddress] = useState();
 
   useEffect(() => {
     if (address) {
@@ -197,29 +199,28 @@ function App(props) {
         return createEvent.args.owners.includes(address);
       }).map(createEvent => createEvent.args.contractAddress);
 
-      const multiSigAddress = multiSigsForUser[0];
-      if (multiSigAddress) {
-        setMultiSigAddress(multiSigAddress);
+      if (multiSigsForUser.length > 0) {
+        // setCurrentMultiSigAddress(multiSigsForUser[0]);
+        setMultiSigs(multiSigsForUser);
       }
     }
   }, [createMultiSigEvents, address]);
 
   useEffect(() => {
-    if (multiSigAddress) {
-      readContracts.MultiSigWallet = new ethers.Contract(multiSigAddress, multiSigWalletABI, localProvider);
-      writeContracts.MultiSigWallet = new ethers.Contract(multiSigAddress, multiSigWalletABI, userSigner);
+    if (currentMultiSigAddress) {
+      readContracts.MultiSigWallet = new ethers.Contract(currentMultiSigAddress, multiSigWalletABI, localProvider);
+      writeContracts.MultiSigWallet = new ethers.Contract(currentMultiSigAddress, multiSigWalletABI, userSigner);
     }
-  }, [multiSigAddress]);
+  }, [currentMultiSigAddress, readContracts, writeContracts]);
 
   // MultiSigWallet Events:
-  const executeTransactionEvents = useEventListener(multiSigAddress ? readContracts : null, contractName, "ExecuteTransaction", localProvider, 1);
+  const executeTransactionEvents = useEventListener(currentMultiSigAddress ? readContracts : null, contractName, "ExecuteTransaction", localProvider, 1);
   if(DEBUG) console.log("📟 executeTransactionEvents:", executeTransactionEvents);
 
-  const ownerEvents = useEventListener(multiSigAddress ? readContracts : null, contractName, "Owner", localProvider, 1);
-  if(DEBUG) console.log("📟 ownerEvents:", ownerEvents, readContracts);
+  const ownerEvents = useEventListener(currentMultiSigAddress ? readContracts : null, contractName, "Owner", localProvider, 1);
+  if(DEBUG) console.log("📟 ownerEvents:", ownerEvents);
 
   // EXTERNAL CONTRACT EXAMPLE:
-  //
   // If you want to bring in the mainnet DAI contract it would look like:
   const mainnetContracts = useContractLoader(mainnetProvider, contractConfig);
 
@@ -317,28 +318,13 @@ function App(props) {
 
   const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf("local") !== -1;
 
-  const userHasMultiSigs = true;
+  const userHasMultiSigs = currentMultiSigAddress ? true : false;
 
-  const menu = (
-    <Menu>
-      <Menu.Item>
-        <a target="_blank" rel="noopener noreferrer" href="https://www.antgroup.com">
-          1st menu item
-        </a>
-      </Menu.Item>
-      <Menu.Item icon={<DownOutlined />} disabled>
-        <a target="_blank" rel="noopener noreferrer" href="https://www.aliyun.com">
-          2nd menu item (disabled)
-        </a>
-      </Menu.Item>
-      <Menu.Item disabled>
-        <a target="_blank" rel="noopener noreferrer" href="https://www.luohanacademy.com">
-          3rd menu item (disabled)
-        </a>
-      </Menu.Item>
-      <Menu.Item danger>a danger item</Menu.Item>
-    </Menu>
-  );
+  const handleMultiSigChange = (value) => {
+    setCurrentMultiSigAddress(value);
+  }
+
+  console.log("currentMultiSigAddress:", currentMultiSigAddress);
 
   return (
     <div className="App">
@@ -362,11 +348,11 @@ function App(props) {
             writeContracts={writeContracts}
             contractName={'MultiSigFactory'}
           />
-          <Dropdown overlay={menu}>
-            <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-              Select Multi-Sig <DownOutlined />
-            </a>
-          </Dropdown>
+          <Select style={{ width: 120 }} onChange={handleMultiSigChange}>
+            {multiSigs.map((address, index) => (
+              <Option key={index} value={address}>{address}</Option>
+            ))}
+          </Select>
         </div>
         <Menu disabled={!userHasMultiSigs} style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
           <Menu.Item key="/">
@@ -394,7 +380,7 @@ function App(props) {
             </Row>
           :
             <Home
-              contractAddress={contractAddress}
+              contractAddress={currentMultiSigAddress}
               localProvider={localProvider}
               price={price}
               mainnetProvider={mainnetProvider}
