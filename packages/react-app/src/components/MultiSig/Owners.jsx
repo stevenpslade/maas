@@ -37,7 +37,7 @@ export default function Owners({
                 address={ownerAddress}
                 ensProvider={mainnetProvider}
                 blockExplorer={blockExplorer}
-                fontSize={32}
+                fontSize={24}
               />
             </List.Item>
           )

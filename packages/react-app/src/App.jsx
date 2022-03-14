@@ -178,11 +178,9 @@ function App(props) {
 
   // TODO: 🪄 ✨ 🪄 ✨🪄 ✨
   // ---------------------
-  // * When user address is detected in Create event, update backend
-  // ** check if contractId is present in backend, if not add
-  // e.g. createEventContractIds.difference(backendIds) = <array of ids not in backend to add>
-  // * Mobile friendly! (maybe)
-  // User could manually remove multisigs if they are no longer an owner (let them do it incase they want to watch it)
+  // * Refactor to use app context and getContractConfigWithInjected example
+  // * Custom data option for propose tx
+  // ? User could manually remove multisigs if they are no longer an owner (let them do it incase they want to watch it)
 
   //📟 Listen for broadcast events
 
@@ -271,46 +269,6 @@ function App(props) {
   console.log("🏷 Resolved austingriffith.eth as:",addressFromENS)
   */
 
-  //
-  // 🧫 DEBUG 👨🏻‍🔬
-  //
-  useEffect(() => {
-    if (
-      DEBUG &&
-      mainnetProvider &&
-      address &&
-      selectedChainId &&
-      yourLocalBalance &&
-      yourMainnetBalance &&
-      readContracts &&
-      writeContracts &&
-      mainnetContracts
-    ) {
-      console.log("_____________________________________ 🏗 scaffold-eth _____________________________________");
-      console.log("🌎 mainnetProvider", mainnetProvider);
-      console.log("🏠 localChainId", localChainId);
-      console.log("👩‍💼 selected address:", address);
-      console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
-      console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
-      console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
-      console.log("📝 readContracts", readContracts);
-      console.log("🌍 DAI contract on mainnet:", mainnetContracts);
-      console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
-      console.log("🔐 writeContracts", writeContracts);
-    }
-  }, [
-    mainnetProvider,
-    address,
-    selectedChainId,
-    yourLocalBalance,
-    yourMainnetBalance,
-    readContracts,
-    writeContracts,
-    mainnetContracts,
-    localChainId,
-    myMainnetDAIBalance,
-  ]);
-
   const loadWeb3Modal = useCallback(async () => {
     const provider = await web3Modal.connect();
     setInjectedProvider(new ethers.providers.Web3Provider(provider));
@@ -350,6 +308,8 @@ function App(props) {
 
   console.log("currentMultiSigAddress:", currentMultiSigAddress);
 
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+
   return (
     <div className="App">
       <Header />
@@ -371,6 +331,8 @@ function App(props) {
             tx={tx}
             writeContracts={writeContracts}
             contractName={'MultiSigFactory'}
+            isCreateModalVisible={isCreateModalVisible}
+            setIsCreateModalVisible={setIsCreateModalVisible}
           />
           <Select value={[currentMultiSigAddress]} style={{ width: 120 }} onChange={handleMultiSigChange}>
             {multiSigs.map((address, index) => (
@@ -378,28 +340,28 @@ function App(props) {
             ))}
           </Select>
         </div>
-        <Menu disabled={!userHasMultiSigs} style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
-          <Menu.Item key="/">
-            <Link to="/">Your MultiSig</Link>
-          </Menu.Item>
-          <Menu.Item key="/create">
-            <Link to="/create">Propose Transaction</Link>
-          </Menu.Item>
-          <Menu.Item key="/pool">
-            <Link to="/pool">Pool</Link>
-          </Menu.Item>
-          <Menu.Item key="/debug">
-            <Link to="/debug">Debug Contracts</Link>
-          </Menu.Item>
-        </Menu>
       </div>
+      <Menu disabled={!userHasMultiSigs} style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
+        <Menu.Item key="/">
+          <Link to="/">Your MultiSig</Link>
+        </Menu.Item>
+        <Menu.Item key="/create">
+          <Link to="/create">Propose Transaction</Link>
+        </Menu.Item>
+        <Menu.Item key="/pool">
+          <Link to="/pool">Pool</Link>
+        </Menu.Item>
+        <Menu.Item key="/debug">
+          <Link to="/debug">Debug Contracts</Link>
+        </Menu.Item>
+      </Menu>
 
       <Switch>
         <Route exact path="/">
           {!userHasMultiSigs ?
             <Row style={{ marginTop: 40 }}>
               <Col span={12} offset={6}>
-                <Alert message="✨ Create or select your Multi-Sig ✨" type="info" />
+                <Alert message={<>✨ <Button onClick={() => setIsCreateModalVisible(true)} type="link" style={{ padding: 0 }}>Create</Button> or select your Multi-Sig ✨</>} type="info" />
               </Col>
             </Row>
           :

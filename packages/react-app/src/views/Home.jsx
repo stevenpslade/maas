@@ -17,7 +17,7 @@ export default function Home({
 }) {
   return (
     <Row>
-      <Col span={12} offset={3}>
+      <Col xs={{ span: 24 }} lg={{ span: 12, offset: 3 }}>
       <div style={{ padding: 32, maxWidth: 750, margin: "auto" }}>
         <div style={{ paddingBottom: 32 }}>
           <div>
@@ -65,7 +65,7 @@ export default function Home({
         />
       </div>
       </Col>
-      <Col span={6}>
+      <Col  lg={6} xs={24}>
           <Owners ownerEvents={ownerEvents} signaturesRequired={signaturesRequired} mainnetProvider={mainnetProvider} blockExplorer={blockExplorer} />
       </Col>
     </Row>

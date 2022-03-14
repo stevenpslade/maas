@@ -17,8 +17,9 @@ export default function CreateMultiSigModal({
   tx,
   writeContracts,
   contractName,
+  isCreateModalVisible,
+  setIsCreateModalVisible,
 }) {
-  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [pendingCreate, setPendingCreate] = useState(false);
   const [txSent, setTxSent] = useState(false);
   const [txError, setTxError] = useState(false);
