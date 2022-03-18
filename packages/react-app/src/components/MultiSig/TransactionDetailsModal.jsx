@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal } from "antd";
 import { Address, Balance } from "..";
+import { ethers } from "ethers";
 
 export default function TransactionDetailsModal({visible, handleOk, mainnetProvider, price, txnInfo = null}) {
   return (
@@ -31,11 +32,16 @@ export default function TransactionDetailsModal({visible, handleOk, mainnetProvi
                   <Address fontSize={16} address={txnInfo.args[index]} ensProvider={mainnetProvider} />
                 </div>
               );
-            }
-            if (element.type === "uint256") {
+            } else if (element.type === "uint256") {
               return (
                 <p key={element.name}>
                   {element.name === "value" ? <><b>{element.name} : </b> <Balance fontSize={16} balance={txnInfo.args[index]} dollarMultiplier={price} /> </> : <><b>{element.name} : </b> {txnInfo.args[index] && txnInfo.args[index].toNumber()}</>}
+                </p>
+              );
+            } else {
+              return (
+                <p key={element.name}>
+                  {<><b>{element.name} : </b> {txnInfo.args[index]}</>}
                 </p>
               );
             }

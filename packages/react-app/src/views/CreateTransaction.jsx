@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useHistory } from "react-router-dom";
-import { Button, Select, InputNumber, Space } from "antd";
+import { Button, Input, Select, InputNumber, Space, Tooltip } from "antd";
+import { CodeOutlined } from '@ant-design/icons';
 import { AddressInput, EtherInput } from "../components";
-import { useContractReader } from "eth-hooks";
+import TransactionDetailsModal from "../components/MultiSig/TransactionDetailsModal";
+import { parseExternalContractTransaction } from "../helpers";
 import { useLocalStorage } from "../hooks";
 import { ethers } from "ethers";
 import { parseEther } from "@ethersproject/units";
-import { set } from "store";
 const { Option } = Select;
 
 const axios = require("axios");
@@ -29,11 +30,31 @@ export default function CreateTransaction({
   const [newSignaturesRequired, setNewSignaturesRequired] = useState(signaturesRequired)
   const [amount, setAmount] = useState("0");
   const [to, setTo] = useLocalStorage("to");
-  const [loading, setLoading] = useState(false)
+  const [customCallData, setCustomCallData] = useState("");
+  const [parsedCustomCallData, setParsedCustomCallData] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleOk = () => {
+    setIsModalVisible(false);
+  };
 
   const inputStyle = {
     padding: 10,
   };
+
+  useEffect(() => {
+    const getParsedTransaction = async () => {
+      const parsedTransaction = await parseExternalContractTransaction(to, customCallData);
+      setParsedCustomCallData(parsedTransaction);
+    }
+
+    getParsedTransaction();
+  }, [customCallData]);
 
   const createTransaction = async () => {
     try {
@@ -41,8 +62,8 @@ export default function CreateTransaction({
 
       let callData;
       let executeToAddress;
-      if (methodName == "transferFunds") {
-        callData = "0x";
+      if (methodName == "transferFunds" || methodName == "customCallData") {
+        callData = methodName == "transferFunds" ? "0x" : customCallData;
         executeToAddress = to;
       } else {
         callData = readContracts[contractName]?.interface?.encodeFunctionData(methodName, [to, newSignaturesRequired]);
@@ -102,6 +123,7 @@ export default function CreateTransaction({
               <Option key="transferFunds">Send ETH</Option>
               <Option key="addSigner">Add Signer</Option>
               <Option key="removeSigner">Remove Signer</Option>
+              <Option key="customCallData">Custom Call Data</Option>
             </Select>
           </div>
           <div style={inputStyle}>
@@ -114,19 +136,44 @@ export default function CreateTransaction({
             />
           </div>
           <div style={inputStyle}>
-            {methodName == "transferFunds" ? 
-              <EtherInput
-                price={price}
-                mode="USD"
-                value={amount}
-                onChange={setAmount}
-              />
-            :
+            {(methodName == "addSigner" || methodName == "removeSigner") &&
               <InputNumber
                 style={{ width: "100%" }}
                 placeholder="New # of signatures required"
                 value={newSignaturesRequired}
                 onChange={setNewSignaturesRequired}
+              />
+            }
+            {methodName == "customCallData" &&
+              <>
+                <Input.Group compact>
+                  <Input
+                    style={{ width: 'calc(100% - 31px)', marginBottom: 20 }}
+                    placeholder="Custom call data"
+                    value={customCallData}
+                    onChange={e => {
+                      setCustomCallData(e.target.value);
+                    }}
+                  />
+                  <Tooltip title="Parse transaction data">
+                    <Button onClick={showModal} icon={<CodeOutlined />} />
+                  </Tooltip>
+                </Input.Group>
+                <TransactionDetailsModal
+                  visible={isModalVisible}
+                  txnInfo={parsedCustomCallData}
+                  handleOk={handleOk}
+                  mainnetProvider={mainnetProvider}
+                  price={price}
+                />
+              </>
+            }
+            {(methodName == "transferFunds" || methodName == "customCallData") &&
+              <EtherInput
+                price={price}
+                mode="USD"
+                value={amount}
+                onChange={setAmount}
               />
             }
           </div>

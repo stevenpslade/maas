@@ -176,12 +176,6 @@ function App(props) {
   const contractName = "MultiSigWallet";
   const contractAddress = readContracts?.MultiSigWallet?.address;
 
-  // TODO: 🪄 ✨ 🪄 ✨🪄 ✨
-  // ---------------------
-  // * Refactor to use app context and getContractConfigWithInjected example
-  // * Custom data option for propose tx
-  // ? User could manually remove multisigs if they are no longer an owner (let them do it incase they want to watch it)
-
   //📟 Listen for broadcast events
 
   // MultiSigFactory Events:

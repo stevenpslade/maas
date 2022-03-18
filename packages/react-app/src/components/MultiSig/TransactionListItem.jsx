@@ -1,16 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, List } from "antd";
 
 import { Address, Balance, Blockie } from "..";
 import TransactionDetailsModal from "./TransactionDetailsModal";
 import { EllipsisOutlined } from "@ant-design/icons";
-import { parseEther, formatEther } from "@ethersproject/units";
+import { ethers } from "ethers";
+import { parseEther } from "@ethersproject/units";
+import { parseExternalContractTransaction } from "../../helpers";
+
+const axios = require("axios");
 
 export default function TransactionListItem({ item, mainnetProvider, blockExplorer, price, readContracts, contractName, children }) {
+  console.log("item:", item);
   item = item.args ? item.args : item;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [txnInfo, setTxnInfo] = useState(null);
+  const [txnData, setTxnData] = useState(null);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -20,13 +25,23 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
     setIsModalVisible(false);
   };
 
-  let txnData;
-  try {
-    // TODO: this might be fine but also try getting name from external contracts
-    txnData = item.data != "0x" ? readContracts[contractName].interface.parseTransaction(item) : null;
-  } catch (error) {
-    console.log("ERROR", error)
-  }
+  useEffect(() => {
+    if (!txnData) {
+      try {
+        const parsedData = item.data != "0x" ? readContracts[contractName].interface.parseTransaction(item) : null;
+        setTxnData(parsedData);
+      } catch (argumentError) {
+        console.log("ERROR", argumentError);
+
+        const getParsedTransaction = async () => {
+          const parsedTransaction = await parseExternalContractTransaction(item.to, item.data);
+          setTxnData(parsedTransaction);
+        }
+
+        getParsedTransaction();
+      }
+    }
+  }, [item]);
 
   return <>
     <TransactionDetailsModal
@@ -44,7 +59,9 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
       <span>
         <Blockie size={4} scale={8} address={item.hash} /> {item.hash.substr(0, 6)}
       </span>
-      <Address address={item.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+      {ethers.utils.isAddress(txnData?.args[0]) &&
+        <Address address={txnData.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+      }
       <Balance balance={item.value ? item.value : parseEther("" + parseFloat(item.amount).toFixed(12))} dollarMultiplier={price} />
       <>
         {
@@ -52,6 +69,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
         }
       </>
       <Button
+        disabled={!txnData}
         onClick={showModal}
       >
         <EllipsisOutlined />
@@ -71,7 +89,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
         </p>
         <p>
           <b>Addressed to :&nbsp;</b>
-          <Address address={txnData ? txnData.args[0] : item?.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={12} />
+          <Address address={item.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={12} />
         </p>
       </div>
     </List.Item>}
