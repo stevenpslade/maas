@@ -55,7 +55,7 @@ export default function Owners({
                     address={prevOwnerAddress}
                     ensProvider={mainnetProvider}
                     blockExplorer={blockExplorer}
-                    fontSize={32}
+                    fontSize={24}
                   />
                 </List.Item>
               )
