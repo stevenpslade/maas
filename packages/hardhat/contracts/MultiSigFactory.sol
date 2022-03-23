@@ -5,6 +5,7 @@ import "./MultiSigWallet.sol";
 
 contract MultiSigFactory {
   MultiSigWallet[] public multiSigs;
+  mapping(address => bool) existsMultiSig;
 
   event Create(
     uint indexed contractId,
@@ -14,7 +15,27 @@ contract MultiSigFactory {
     uint signaturesRequired
   );
 
+  event Owners(
+    address indexed contractAddress,
+    address[] owners,
+    uint256 indexed signaturesRequired
+  );
+
+
   constructor() {}
+
+  modifier onlyRegistered() {
+    require(existsMultiSig[msg.sender], "caller not registered to use logger");
+    _;
+  }
+
+  function emitOwners(
+    address _contractAddress,
+    address[] memory _owners,
+    uint256 _signaturesRequired
+  ) external onlyRegistered {
+    emit Owners(_contractAddress, _owners, _signaturesRequired);
+  }
 
   function create(
     uint256 _chainId,
@@ -23,10 +44,12 @@ contract MultiSigFactory {
   ) public payable {
     uint id = numberOfMultiSigs();
 
-    MultiSigWallet multiSig = (new MultiSigWallet){value: msg.value}(_chainId, _owners, _signaturesRequired);
+    MultiSigWallet multiSig = (new MultiSigWallet){value: msg.value}(_chainId, _owners, _signaturesRequired, address(this));
     multiSigs.push(multiSig);
+    existsMultiSig[address(multiSig)] = true;
 
     emit Create(id, address(multiSig), msg.sender, _owners, _signaturesRequired);
+    emit Owners(address(multiSig), _owners, _signaturesRequired);
   }
 
   function numberOfMultiSigs() public view returns(uint) {

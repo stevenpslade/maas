@@ -33,7 +33,7 @@ import {
   NetworkSwitch,
   CreateMultiSigModal,
 } from "./components";
-import { NETWORKS, ALCHEMY_KEY } from "./constants";
+import { NETWORKS, ALCHEMY_KEY, BACKEND_URL } from "./constants";
 import externalContracts from "./contracts/external_contracts";
 import multiSigWalletABI from "./contracts/multi_sig_wallet";
 // contracts
@@ -51,24 +51,6 @@ import { useStaticJsonRPC } from "./hooks";
 
 const { Option } = Select;
 const { ethers } = require("ethers");
-/*
-    Welcome to 🏗 scaffold-eth !
-
-    Code:
-    https://github.com/scaffold-eth/scaffold-eth
-
-    Support:
-    https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA
-    or DM @austingriffith on twitter or telegram
-
-    You should get your own Alchemy.com & Infura.io ID and put it in `constants.js`
-    (this is your connection to the main Ethereum network for ENS etc.)
-
-
-    🌏 EXTERNAL CONTRACTS:
-    You can also bring in contract artifacts in `constants.js`
-    (and then use the `useExternalContractLoader()` hook!)
-*/
 
 /// 📡 What chain are your contracts deployed to?
 const initialNetwork = NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
@@ -99,8 +81,6 @@ function App(props) {
   const location = useLocation();
 
   const targetNetwork = NETWORKS[selectedNetwork];
-
-  const poolServerUrl = "http://localhost:49832/";
 
   // 🔭 block explorer URL
   const blockExplorer = targetNetwork.blockExplorer;
@@ -179,25 +159,30 @@ function App(props) {
   //📟 Listen for broadcast events
 
   // MultiSigFactory Events:
-  const createMultiSigEvents = useEventListener(readContracts, "MultiSigFactory", "Create", localProvider, 1);
-  if(DEBUG) console.log("📟 createMultiSigEvents:", createMultiSigEvents);
+  const ownersMultiSigEvents = useEventListener(readContracts, "MultiSigFactory", "Owners", localProvider, 1);
+  if(DEBUG) console.log("📟 ownersMultiSigEvents:", ownersMultiSigEvents);
 
   const [multiSigs, setMultiSigs] = useState([]);
   const [currentMultiSigAddress, setCurrentMultiSigAddress] = useState();
 
   useEffect(() => {
     if (address) {
-      const multiSigsForUser = createMultiSigEvents.filter(createEvent => {
-        return createEvent.args.owners.includes(address);
-      }).map(createEvent => createEvent.args.contractAddress);
+      const multiSigsForUser = ownersMultiSigEvents.reduce((filtered, createEvent) => {
+        if (createEvent.args.owners.includes(address) && !filtered.includes(createEvent.args.contractAddress)) {
+          filtered.push(createEvent.args.contractAddress);
+        }
+
+        return filtered;
+      }, []);
 
       if (multiSigsForUser.length > 0) {
-        setContractNameForEvent(null);
-        setCurrentMultiSigAddress(multiSigsForUser[multiSigsForUser.length - 1]);
+        const recentMultiSigAddress = multiSigsForUser[multiSigsForUser.length - 1];
+        if (recentMultiSigAddress !== currentMultiSigAddress) setContractNameForEvent(null);
+        setCurrentMultiSigAddress(recentMultiSigAddress);
         setMultiSigs(multiSigsForUser);
       }
     }
-  }, [createMultiSigEvents, address]);
+  }, [ownersMultiSigEvents, address]);
 
   const [signaturesRequired, setSignaturesRequired] = useState(0);
   const [nonce, setNonce] = useState(0);
@@ -375,7 +360,7 @@ function App(props) {
         </Route>
         <Route path="/create">
           <CreateTransaction
-            poolServerUrl={poolServerUrl}
+            poolServerUrl={BACKEND_URL}
             contractName={contractName}
             contractAddress={contractAddress}
             mainnetProvider={mainnetProvider}
@@ -392,7 +377,7 @@ function App(props) {
         </Route>
         <Route path="/pool">
           <Transactions
-            poolServerUrl={poolServerUrl}
+            poolServerUrl={BACKEND_URL}
             contractName={contractName}
             address={address}
             userSigner={userSigner}

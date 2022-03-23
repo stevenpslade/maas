@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "hardhat/console.sol";
-
 pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "./MultiSigFactory.sol";
 
 contract MultiSigWallet {
 	using ECDSA for bytes32;
+  MultiSigFactory private multiSigFactory;
 
 	event Deposit(address indexed sender, uint amount, uint balance);
 	event ExecuteTransaction( address indexed owner, address payable to, uint256 value, bytes data, uint256 nonce, bytes32 hash, bytes result);
 	event Owner( address indexed owner, bool added);
 
 	mapping(address => bool) public isOwner;
+
+  address[] public owners;
 
 	uint public signaturesRequired;
 	uint public nonce;
@@ -34,7 +36,8 @@ contract MultiSigWallet {
     _;
   }
 
-  constructor(uint256 _chainId, address[] memory _owners, uint _signaturesRequired) payable requireNonZeroSignatures(_signaturesRequired) {
+  constructor(uint256 _chainId, address[] memory _owners, uint _signaturesRequired, address _factory) payable requireNonZeroSignatures(_signaturesRequired) {
+    multiSigFactory = MultiSigFactory(_factory);
     signaturesRequired = _signaturesRequired;
     for (uint i = 0; i < _owners.length; i++) {
       address owner = _owners[i];
@@ -43,6 +46,7 @@ contract MultiSigWallet {
       require(!isOwner[owner], "constructor: owner not unique");
 
       isOwner[owner] = true;
+      owners.push(owner);
 
       emit Owner(owner,isOwner[owner]);
     }
@@ -55,18 +59,39 @@ contract MultiSigWallet {
     require(!isOwner[newSigner], "addSigner: owner not unique");
 
     isOwner[newSigner] = true;
+    owners.push(newSigner);
     signaturesRequired = newSignaturesRequired;
 
     emit Owner(newSigner, isOwner[newSigner]);
+    multiSigFactory.emitOwners(address(this), owners, newSignaturesRequired);
   }
 
   function removeSigner(address oldSigner, uint256 newSignaturesRequired) public onlySelf requireNonZeroSignatures(newSignaturesRequired) {
     require(isOwner[oldSigner], "removeSigner: not owner");
 
-    isOwner[oldSigner] = false;
+     _removeOwner(oldSigner);
     signaturesRequired = newSignaturesRequired;
 
     emit Owner(oldSigner, isOwner[oldSigner]);
+    multiSigFactory.emitOwners(address(this), owners, newSignaturesRequired);
+  }
+
+  function _removeOwner(address _oldSigner) private {
+    isOwner[_oldSigner] = false;
+    uint256 ownersLength = owners.length;
+    address[] memory poppedOwners = new address[](owners.length);
+    for (uint256 i = ownersLength - 1; i >= 0; i--) {
+      if (owners[i] != _oldSigner) {
+        poppedOwners[i] = owners[i];
+        owners.pop();
+      } else {
+        owners.pop();
+        for (uint256 j = i; j < ownersLength - 1; j++) {
+          owners.push(poppedOwners[j]);
+        }
+        return;
+      }
+    }
   }
 
   function updateSignaturesRequired(uint256 newSignaturesRequired) public onlySelf requireNonZeroSignatures(newSignaturesRequired) {
