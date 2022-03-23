@@ -2,6 +2,8 @@
 
 🚀 Built with [Scaffold-Eth](https://github.com/scaffold-eth/scaffold-eth)
 
+✨ Demo deployed on Rinkeby testnet: https://maasify.surge.sh/
+
 Create multiple multisignature wallets and see their details as well as propose, execute, and sign transactions - all in just a few clicks.
 
 <img width="1131" alt="image" src="https://user-images.githubusercontent.com/12888080/159298438-ade3d676-5275-4c6e-978b-9421bcb5f746.png">
