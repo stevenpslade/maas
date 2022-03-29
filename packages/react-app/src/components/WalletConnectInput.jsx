@@ -31,6 +31,11 @@ const WalletConnectInput = ({
     }
   }, [walletConnectUri]);
 
+  useEffect(() => {
+    if (address) {
+      resetConnection();
+    }
+  }, [address]);
 
   const setupAndSubscribe = () => {
     const connector = setupConnector();
