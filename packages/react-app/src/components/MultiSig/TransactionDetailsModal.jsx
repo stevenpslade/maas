@@ -1,19 +1,26 @@
 import React from "react";
-import { Modal } from "antd";
+import { Modal, Button } from "antd";
 import { Address, Balance } from "..";
 import { ethers } from "ethers";
 
-export default function TransactionDetailsModal({visible, handleOk, mainnetProvider, price, txnInfo = null}) {
+export default function TransactionDetailsModal({visible, handleOk, handleCancel, mainnetProvider, price, txnInfo = null, showFooter = false}) {
   return (
     <Modal
       title="Transaction Details"
       visible={visible}
-      onCancel={handleOk}
+      onCancel={handleCancel}
       destroyOnClose
       onOk={handleOk}
-      footer={null}
       closable
       maskClosable
+      footer={showFooter ? [
+        <Button key="cancel" onClick={handleCancel}>
+          Cancel
+        </Button>,
+        <Button key="ok" type="primary" onClick={handleOk}>
+          Propose
+        </Button>,
+      ] : null}
     >
       {txnInfo && (
         <div>

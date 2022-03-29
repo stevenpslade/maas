@@ -21,10 +21,6 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
     setIsModalVisible(true);
   };
 
-  const handleOk = () => {
-    setIsModalVisible(false);
-  };
-
   useEffect(() => {
     if (!txnData) {
       try {
@@ -47,7 +43,8 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
     <TransactionDetailsModal
       visible={isModalVisible}
       txnInfo={txnData}
-      handleOk={handleOk}
+      handleOk={() => setIsModalVisible(false)}
+      handleCancel={() => setIsModalVisible(false)}
       mainnetProvider={mainnetProvider}
       price={price}
     />

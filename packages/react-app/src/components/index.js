@@ -23,6 +23,7 @@ export { default as FaucetHint } from "./FaucetHint";
 export { default as NetworkSwitch } from "./NetworkSwitch";
 export { default as MultiAddressInput } from "./MultiAddressInput";
 export { default as TokenSelect } from "./TokenSelect";
+export { default as WalletConnectInput } from "./WalletConnectInput";
 
 export { default as TransactionListItem } from "./MultiSig/TransactionListItem";
 export { default as Owners } from "./MultiSig/Owners";

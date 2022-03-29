@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import { Button, Input, Select, InputNumber, Space, Tooltip } from "antd";
 import { CodeOutlined } from '@ant-design/icons';
-import { AddressInput, EtherInput } from "../components";
+import { AddressInput, EtherInput, WalletConnectInput } from "../components";
 import TransactionDetailsModal from "../components/MultiSig/TransactionDetailsModal";
 import { parseExternalContractTransaction } from "../helpers";
 import { useLocalStorage } from "../hooks";
@@ -34,13 +34,10 @@ export default function CreateTransaction({
   const [parsedCustomCallData, setParsedCustomCallData] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isWalletConnectTransaction, setIsWalletConnectTransaction] = useState(false);
 
   const showModal = () => {
     setIsModalVisible(true);
-  };
-
-  const handleOk = () => {
-    setIsModalVisible(false);
   };
 
   const inputStyle = {
@@ -56,13 +53,25 @@ export default function CreateTransaction({
     getParsedTransaction();
   }, [customCallData]);
 
+  const loadWalletConnectData = ({ to, value, data }) => {
+    setTo(to);
+    value ? setAmount(ethers.utils.formatEther(value)) : setAmount("0");
+    setCustomCallData(data);
+    setIsWalletConnectTransaction(true);
+  };
+
+  useEffect(() => {
+    isWalletConnectTransaction && createTransaction();
+    setIsWalletConnectTransaction(false);
+  }, [isWalletConnectTransaction]);
+
   const createTransaction = async () => {
     try {
       setLoading(true)
 
       let callData;
       let executeToAddress;
-      if (methodName == "transferFunds" || methodName == "customCallData") {
+      if (methodName == "transferFunds" || methodName == "customCallData" || methodName == "wcCallData") {
         callData = methodName == "transferFunds" ? "0x" : customCallData;
         executeToAddress = to;
       } else {
@@ -111,7 +120,7 @@ export default function CreateTransaction({
       console.log("Error: ", error);
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -124,68 +133,86 @@ export default function CreateTransaction({
               <Option key="addSigner">Add Signer</Option>
               <Option key="removeSigner">Remove Signer</Option>
               <Option key="customCallData">Custom Call Data</Option>
+              <Option key="wcCallData">
+                <img src="walletconnect-logo.svg" style={{ height: 20, width: 20 }} /> WalletConnect
+              </Option>
             </Select>
           </div>
-          <div style={inputStyle}>
-            <AddressInput
-              autoFocus
-              ensProvider={mainnetProvider}
-              placeholder={methodName == "transferFunds" ? "Recepient address" : "Owner address"}
-              value={to}
-              onChange={setTo}
-            />
-          </div>
-          <div style={inputStyle}>
-            {(methodName == "addSigner" || methodName == "removeSigner") &&
-              <InputNumber
-                style={{ width: "100%" }}
-                placeholder="New # of signatures required"
-                value={newSignaturesRequired}
-                onChange={setNewSignaturesRequired}
-              />
-            }
-            {methodName == "customCallData" &&
-              <>
-                <Input.Group compact>
-                  <Input
-                    style={{ width: 'calc(100% - 31px)', marginBottom: 20 }}
-                    placeholder="Custom call data"
-                    value={customCallData}
-                    onChange={e => {
-                      setCustomCallData(e.target.value);
-                    }}
-                  />
-                  <Tooltip title="Parse transaction data">
-                    <Button onClick={showModal} icon={<CodeOutlined />} />
-                  </Tooltip>
-                </Input.Group>
-                <TransactionDetailsModal
-                  visible={isModalVisible}
-                  txnInfo={parsedCustomCallData}
-                  handleOk={handleOk}
-                  mainnetProvider={mainnetProvider}
-                  price={price}
-                />
-              </>
-            }
-            {(methodName == "transferFunds" || methodName == "customCallData") &&
-              <EtherInput
+          {methodName == "wcCallData" ? (
+            <div style={inputStyle}>
+              <WalletConnectInput
+                chainId={localProvider?._network.chainId}
+                address={contractAddress}
+                loadWalletConnectData={loadWalletConnectData}
+                mainnetProvider={mainnetProvider}
                 price={price}
-                mode="USD"
-                value={amount}
-                onChange={setAmount}
               />
-            }
-          </div>
-          <Space style={{ marginTop: 32 }}>
-            <Button
-              loading={loading}
-              onClick={createTransaction}
-              type="primary"
-            >
-              Propose
-            </Button>
-          </Space>
+            </div>
+          ) : (
+            <>
+              <div style={inputStyle}>
+                <AddressInput
+                  autoFocus
+                  ensProvider={mainnetProvider}
+                  placeholder={methodName == "transferFunds" ? "Recepient address" : "Owner address"}
+                  value={to}
+                  onChange={setTo}
+                />
+              </div>
+              <div style={inputStyle}>
+                {(methodName == "addSigner" || methodName == "removeSigner") &&
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    placeholder="New # of signatures required"
+                    value={newSignaturesRequired}
+                    onChange={setNewSignaturesRequired}
+                  />
+                }
+                {methodName == "customCallData" &&
+                  <>
+                    <Input.Group compact>
+                      <Input
+                        style={{ width: 'calc(100% - 31px)', marginBottom: 20 }}
+                        placeholder="Custom call data"
+                        value={customCallData}
+                        onChange={e => {
+                          setCustomCallData(e.target.value);
+                        }}
+                      />
+                      <Tooltip title="Parse transaction data">
+                        <Button onClick={showModal} icon={<CodeOutlined />} />
+                      </Tooltip>
+                    </Input.Group>
+                    <TransactionDetailsModal
+                      visible={isModalVisible}
+                      txnInfo={parsedCustomCallData}
+                      handleOk={() => setIsModalVisible(false)}
+                      handleCancel={() => setIsModalVisible(false)}
+                      mainnetProvider={mainnetProvider}
+                      price={price}
+                    />
+                  </>
+                }
+                {(methodName == "transferFunds" || methodName == "customCallData") &&
+                  <EtherInput
+                    price={price}
+                    mode="USD"
+                    value={amount}
+                    onChange={setAmount}
+                  />
+                }
+              </div>
+              <Space style={{ marginTop: 32 }}>
+                <Button
+                  loading={loading}
+                  onClick={createTransaction}
+                  type="primary"
+                >
+                  Propose
+                </Button>
+              </Space>
+            </>
+          )}
         </div>
 
       </div>
