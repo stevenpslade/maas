@@ -127,6 +127,10 @@ const WalletConnectInput = ({
     if (walletConnectConnector.connected) {
       walletConnectConnector.killSession()
     }
+    localStorage.removeItem('walletconnect');
+    setTimeout(()=>{
+      window.location.reload(true)
+    },500)
   };
 
   const hideModal = () => setIsModalVisible(false);
@@ -218,6 +222,15 @@ const WalletConnectInput = ({
           </Button>
         </>
       }
+
+      { !isConnected && (
+        <div style={{cursor:"pointer"}} onClick={()=>{
+            localStorage.removeItem('walletconnect');
+            setTimeout(()=>{
+              window.location.reload(true)
+            },500)
+        }}>🗑</div>
+      )}
 
       {isModalVisible &&
         <TransactionDetailsModal

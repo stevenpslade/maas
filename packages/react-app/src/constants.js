@@ -11,7 +11,7 @@ export const ALCHEMY_KEY = "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 
 // export const BACKEND_URL = "https://maas-backend-344816.uc.r.appspot.com/"
 // Local backend:
-export const BACKEND_URL = "http://localhost:49832/"
+export const BACKEND_URL = "http://localhost:49899/"
 
 export const NETWORKS = {
   localhost: {

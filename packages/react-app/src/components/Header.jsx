@@ -5,10 +5,10 @@ import React from "react";
 
 export default function Header() {
   return (
-    <a href="https://github.com/stevenpslade/maas" target="_blank" rel="noopener noreferrer">
+    <a href="/">
       <PageHeader
-        title="🪄 MaaS"
-        subTitle="Multi-Sig as a Service"
+        title="👩‍🎓 scholarship.buidlguidl.com"
+        subTitle=""
         style={{ cursor: "pointer" }}
       />
     </a>

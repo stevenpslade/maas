@@ -35,7 +35,7 @@ import {
 } from "./components";
 import { NETWORKS, ALCHEMY_KEY, BACKEND_URL } from "./constants";
 import externalContracts from "./contracts/external_contracts";
-import multiSigWalletABI from "./contracts/multi_sig_wallet";
+//import multiSigWalletABI from "./contracts/multi_sig_wallet";
 // contracts
 import deployedContracts from "./contracts/hardhat_contracts.json";
 import { Transactor, Web3ModalSetup } from "./helpers";
@@ -49,11 +49,12 @@ import {
 } from "./views";
 import { useStaticJsonRPC } from "./hooks";
 
+
 const { Option } = Select;
 const { ethers } = require("ethers");
 
 /// 📡 What chain are your contracts deployed to?
-const initialNetwork = NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
+const initialNetwork = NETWORKS.mainnet; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
 const DEBUG = true;
@@ -62,6 +63,9 @@ const USE_BURNER_WALLET = true; // toggle burner wallet feature
 const USE_NETWORK_SELECTOR = false;
 
 const web3Modal = Web3ModalSetup();
+
+const multiSigWalletABI = [{"inputs":[{"internalType":"uint256","name":"_chainId","type":"uint256"},{"internalType":"address[]","name":"_owners","type":"address[]"},{"internalType":"uint256","name":"_signaturesRequired","type":"uint256"},{"internalType":"address","name":"_factory","type":"address"}],"stateMutability":"payable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"balance","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"address payable","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"},{"indexed":false,"internalType":"bytes","name":"data","type":"bytes"},{"indexed":false,"internalType":"uint256","name":"nonce","type":"uint256"},{"indexed":false,"internalType":"bytes32","name":"hash","type":"bytes32"},{"indexed":false,"internalType":"bytes","name":"result","type":"bytes"}],"name":"ExecuteTransaction","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"bool","name":"added","type":"bool"}],"name":"Owner","type":"event"},{"inputs":[{"internalType":"address","name":"newSigner","type":"address"},{"internalType":"uint256","name":"newSignaturesRequired","type":"uint256"}],"name":"addSigner","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"chainId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address payable","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"},{"internalType":"bytes[]","name":"signatures","type":"bytes[]"}],"name":"executeTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_nonce","type":"uint256"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"getTransactionHash","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"isOwner","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"nonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"owners","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"_hash","type":"bytes32"},{"internalType":"bytes","name":"_signature","type":"bytes"}],"name":"recover","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"pure","type":"function"},{"inputs":[{"internalType":"address","name":"oldSigner","type":"address"},{"internalType":"uint256","name":"newSignaturesRequired","type":"uint256"}],"name":"removeSigner","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"signaturesRequired","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"newSignaturesRequired","type":"uint256"}],"name":"updateSignaturesRequired","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"}]
+
 
 // 🛰 providers
 const providers = [
@@ -164,6 +168,16 @@ function App(props) {
 
   const [multiSigs, setMultiSigs] = useState([]);
   const [currentMultiSigAddress, setCurrentMultiSigAddress] = useState();
+
+
+
+  useEffect(()=>{
+    if(userSigner){
+      setCurrentMultiSigAddress("0x31787164D5A4ca8072035Eb89478e85f45C6d408")
+    }
+  },[userSigner])
+
+
 
   useEffect(() => {
     if (address) {
@@ -301,37 +315,37 @@ function App(props) {
         USE_NETWORK_SELECTOR={USE_NETWORK_SELECTOR}
       />
       <div style={{ position: "relative" }}>
-        <div style={{ position: "absolute", left: 20 }}>
-          <CreateMultiSigModal
-            price={price}
-            selectedChainId={selectedChainId}
-            mainnetProvider={mainnetProvider}
-            address={address}
-            tx={tx}
-            writeContracts={writeContracts}
-            contractName={'MultiSigFactory'}
-            isCreateModalVisible={isCreateModalVisible}
-            setIsCreateModalVisible={setIsCreateModalVisible}
-          />
-          <Select value={[currentMultiSigAddress]} style={{ width: 120 }} onChange={handleMultiSigChange}>
-            {multiSigs.map((address, index) => (
-              <Option key={index} value={address}>{address}</Option>
-            ))}
-          </Select>
-        </div>
+
+        { address && address=="0x34aA3F359A9D614239015126635CE7732c18fDF3" && (
+          <div style={{ position: "absolute", left: 20 }}>
+            <CreateMultiSigModal
+              price={price}
+              selectedChainId={selectedChainId}
+              mainnetProvider={mainnetProvider}
+              address={address}
+              tx={tx}
+              writeContracts={writeContracts}
+              contractName={'MultiSigFactory'}
+              isCreateModalVisible={isCreateModalVisible}
+              setIsCreateModalVisible={setIsCreateModalVisible}
+            />
+            <Select value={[currentMultiSigAddress]} style={{ width: 120 }} onChange={handleMultiSigChange}>
+              {multiSigs.map((address, index) => (
+                <Option key={index} value={address}>{address}</Option>
+              ))}
+            </Select>
+          </div>
+        )}
       </div>
       <Menu disabled={!userHasMultiSigs} style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
         <Menu.Item key="/">
-          <Link to="/">Your MultiSig</Link>
+          <Link to="/">MultiSig</Link>
         </Menu.Item>
         <Menu.Item key="/create">
           <Link to="/create">Propose Transaction</Link>
         </Menu.Item>
         <Menu.Item key="/pool">
           <Link to="/pool">Pool</Link>
-        </Menu.Item>
-        <Menu.Item key="/debug">
-          <Link to="/debug">Debug Contracts</Link>
         </Menu.Item>
       </Menu>
 

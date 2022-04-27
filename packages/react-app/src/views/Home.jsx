@@ -1,7 +1,7 @@
 import React from "react";
 import { Balance, Address, TransactionListItem, Owners } from "../components";
 import QR from "qrcode.react";
-import { List, Row, Col, } from "antd";
+import { List, Row, Col, Button } from "antd";
 
 export default function Home({
   contractAddress,
@@ -16,8 +16,7 @@ export default function Home({
   signaturesRequired,
 }) {
   return (
-    <Row>
-      <Col xs={{ span: 24 }} lg={{ span: 12, offset: 3 }}>
+    <>
       <div style={{ padding: 32, maxWidth: 750, margin: "auto" }}>
         <div style={{ paddingBottom: 32 }}>
           <div>
@@ -47,6 +46,14 @@ export default function Home({
             />
           </div>
         </div>
+        <div style={{padding:32}}>
+        <Owners ownerEvents={ownerEvents} signaturesRequired={signaturesRequired} mainnetProvider={mainnetProvider} blockExplorer={blockExplorer} />
+        </div>
+        <div style={{padding:64}}>
+        <Button type={"primary"} onClick={()=>{
+          window.location = "/create"
+        }}>Propose Transaction</Button>
+        </div>
         <List
           bordered
           dataSource={executeTransactionEvents}
@@ -64,10 +71,8 @@ export default function Home({
           }}
         />
       </div>
-      </Col>
-      <Col  lg={6} xs={24}>
-          <Owners ownerEvents={ownerEvents} signaturesRequired={signaturesRequired} mainnetProvider={mainnetProvider} blockExplorer={blockExplorer} />
-      </Col>
-    </Row>
+
+
+    </>
   );
 }
