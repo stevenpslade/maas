@@ -85,7 +85,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
           {txnData ? txnData.functionFragment?.name : "Transfer Funds"}&nbsp;
         </p>
         <p>
-          <b>Addressed to :&nbsp;</b>
+          <b>To:&nbsp;</b>
           <Address address={item.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={12} />
         </p>
       </div>
