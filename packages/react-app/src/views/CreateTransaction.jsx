@@ -36,9 +36,12 @@ export default function CreateTransaction({
   const [loading, setLoading] = useState(false);
   const [isWalletConnectTransaction, setIsWalletConnectTransaction] = useState(false);
 
+  const [hasEdited, setHasEdited] = useState() //we want the signaturesRequired to update from the contract _until_ they edit it
 
   useEffect(()=>{
-    setNewSignaturesRequired(signaturesRequired)
+    if(!hasEdited){
+      setNewSignaturesRequired(signaturesRequired)
+    }
   },[signaturesRequired])
 
   const showModal = () => {
@@ -72,55 +75,63 @@ export default function CreateTransaction({
 
   const createTransaction = async () => {
     try {
-      setLoading(true)
 
-      let callData;
-      let executeToAddress;
-      if (methodName == "transferFunds" || methodName == "customCallData" || methodName == "wcCallData") {
-        callData = methodName == "transferFunds" ? "0x" : customCallData;
-        executeToAddress = to;
-      } else {
-        callData = readContracts[contractName]?.interface?.encodeFunctionData(methodName, [to, newSignaturesRequired]);
-        executeToAddress = contractAddress;
+      //a little security in the frontend just because 
+      if(newSignaturesRequired<1){
+        alert("signatures required must be >= 1")
+      }else{
+        setLoading(true)
+
+        let callData;
+        let executeToAddress;
+        if (methodName == "transferFunds" || methodName == "customCallData" || methodName == "wcCallData") {
+          callData = methodName == "transferFunds" ? "0x" : customCallData;
+          executeToAddress = to;
+        } else {
+          callData = readContracts[contractName]?.interface?.encodeFunctionData(methodName, [to, newSignaturesRequired]);
+          executeToAddress = contractAddress;
+        }
+
+        const newHash = await readContracts[contractName].getTransactionHash(
+          nonce.toNumber(),
+          executeToAddress,
+          parseEther("" + parseFloat(amount).toFixed(12)),
+          callData,
+        );
+
+        const signature = await userSigner?.signMessage(ethers.utils.arrayify(newHash));
+        console.log("signature: ", signature);
+
+        const recover = await readContracts[contractName].recover(newHash, signature);
+        console.log("recover: ", recover);
+
+        const isOwner = await readContracts[contractName].isOwner(recover);
+        console.log("isOwner: ", isOwner);
+
+        if (isOwner) {
+          const res = await axios.post(poolServerUrl, {
+            chainId: localProvider._network.chainId,
+            address: readContracts[contractName]?.address,
+            nonce: nonce.toNumber(),
+            to: executeToAddress,
+            amount,
+            data: callData,
+            hash: newHash,
+            signatures: [signature],
+            signers: [recover],
+          });
+
+          console.log("RESULT", res.data);
+          setTimeout(() => {
+            history.push("/pool");
+            setLoading(false);
+          }, 1000);
+        } else {
+          console.log("ERROR, NOT OWNER.");
+        }
       }
 
-      const newHash = await readContracts[contractName].getTransactionHash(
-        nonce.toNumber(),
-        executeToAddress,
-        parseEther("" + parseFloat(amount).toFixed(12)),
-        callData,
-      );
 
-      const signature = await userSigner?.signMessage(ethers.utils.arrayify(newHash));
-      console.log("signature: ", signature);
-
-      const recover = await readContracts[contractName].recover(newHash, signature);
-      console.log("recover: ", recover);
-
-      const isOwner = await readContracts[contractName].isOwner(recover);
-      console.log("isOwner: ", isOwner);
-
-      if (isOwner) {
-        const res = await axios.post(poolServerUrl, {
-          chainId: localProvider._network.chainId,
-          address: readContracts[contractName]?.address,
-          nonce: nonce.toNumber(),
-          to: executeToAddress,
-          amount,
-          data: callData,
-          hash: newHash,
-          signatures: [signature],
-          signers: [recover],
-        });
-
-        console.log("RESULT", res.data);
-        setTimeout(() => {
-          history.push("/pool");
-          setLoading(false);
-        }, 1000);
-      } else {
-        console.log("ERROR, NOT OWNER.");
-      }
     } catch(error) {
       console.log("Error: ", error);
       setLoading(false);
@@ -170,7 +181,10 @@ export default function CreateTransaction({
                     style={{ width: "100%" }}
                     placeholder="New # of signatures required"
                     value={newSignaturesRequired}
-                    onChange={setNewSignaturesRequired}
+                    onChange={(value)=>{
+                      setNewSignaturesRequired(value)
+                      setHasEdited(true)
+                    }}
                   />
                 }
                 {methodName == "customCallData" &&
