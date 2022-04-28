@@ -39,6 +39,144 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
     }
   }, [item]);
 
+
+
+
+  const txDisplay = ()=>{
+
+    const toSelf = (item?.to == readContracts[contractName].address)
+
+    if(toSelf && txnData?.functionFragment?.name == "addSigner")
+    {
+      return (
+        <>
+          <span style={{fontSize:16,fontWeight:"bold"}}>
+            Add Signer
+          </span>
+          {ethers.utils.isAddress(txnData?.args[0]) &&
+            <Address address={txnData?.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+          }
+          <span style={{fontSize:16}}>
+            with threshold {txnData?.args[1]?.toNumber()}
+          </span>
+          <>
+            {
+              children
+            }
+          </>
+        </>
+      )
+    }
+    else if(toSelf && txnData?.functionFragment?.name == "removeSigner")
+    {
+      return (
+        <>
+          <span style={{fontSize:16,fontWeight:"bold"}}>
+            Remove Signer
+          </span>
+          {ethers.utils.isAddress(txnData?.args[0]) &&
+            <Address address={txnData?.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+          }
+          <span style={{fontSize:16}}>
+            with threshold {txnData?.args[1]?.toNumber()}
+          </span>
+          <>
+            {
+              children
+            }
+          </>
+        </>
+      )
+    }else if(!txnData?.functionFragment?.name)
+    {
+      return (
+        <>
+          <span style={{fontSize:16,fontWeight:"bold"}}>
+            Transfer
+          </span>
+          <Balance balance={item.value ? item.value : parseEther("" + parseFloat(item.amount).toFixed(12))} dollarMultiplier={price} />
+          to
+          <Address address={item.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+          <>
+            {
+              children
+            }
+          </>
+        </>
+      )
+    }else if(txnData?.signature!="")
+    {
+
+
+      return (
+        <>
+          <span style={{fontSize:16,fontWeight:"bold"}}>
+            Call
+          </span>
+          <span style={{fontSize:16}}>
+            {txnData?.signature}
+            <Button
+              style={{margin:4}}
+              disabled={!txnData}
+              onClick={showModal}
+            >
+              <EllipsisOutlined />
+            </Button>
+          </span>
+          <span style={{fontSize:16}}>
+            on
+          </span>
+          <Address address={item.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+          <>
+            {
+              children
+            }
+          </>
+        </>
+      )
+    }else{
+
+      return (
+        <>
+          <div><i>Unknown transaction type...If you are reading this please screenshot and send to @austingriffith</i></div>
+          {ethers.utils.isAddress(txnData?.args[0]) &&
+            <Address address={txnData.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+          }
+          <Balance balance={item.value ? item.value : parseEther("" + parseFloat(item.amount).toFixed(12))} dollarMultiplier={price} />
+          <>
+            {
+              children
+            }
+          </>
+          <Button
+            disabled={!txnData}
+            onClick={showModal}
+          >
+            <EllipsisOutlined />
+          </Button>
+          <div
+            style={{
+              fontSize: 12,
+              opacity: 0.5,
+              display: "flex",
+              justifyContent: "space-evenly",
+              width: "100%",
+            }}
+          >
+            <p>
+              <b>Event Name :&nbsp;</b>
+              {txnData ? txnData.functionFragment?.name : "Transfer Funds"}&nbsp;
+            </p>
+            <p>
+              <b>To:&nbsp;</b>
+              <Address address={item.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={12} />
+            </p>
+          </div>
+        </>
+      )
+    }
+  }
+
   return <>
     <TransactionDetailsModal
       visible={isModalVisible}
@@ -50,45 +188,13 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
     />
     {<List.Item
       key={item.hash}
-      style={{ position: "relative", display: "flex", flexWrap: "wrap" }}
+      style={{ position: "relative", display: "flex", flexWrap: "wrap", width:800 }}
     >
-      {<b style={{ padding: 16 }}>#{typeof(item.nonce)=== "number" ? item.nonce : item.nonce.toNumber()}</b>}
-      <span>
-        <Blockie size={4} scale={8} address={item.hash} /> {item.hash.substr(0, 6)}
-      </span>
-      {ethers.utils.isAddress(txnData?.args[0]) &&
-        <Address address={txnData.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
-      }
-      <Balance balance={item.value ? item.value : parseEther("" + parseFloat(item.amount).toFixed(12))} dollarMultiplier={price} />
       <>
-        {
-          children
-        }
+        <b style={{ padding: 16 }}>#{typeof(item.nonce)=== "number" ? item.nonce : item.nonce.toNumber()}</b>
+        {txDisplay()}
+        <Blockie size={4} scale={8} address={item.hash} />
       </>
-      <Button
-        disabled={!txnData}
-        onClick={showModal}
-      >
-        <EllipsisOutlined />
-      </Button>
-      <div
-        style={{
-          fontSize: 12,
-          opacity: 0.5,
-          display: "flex",
-          justifyContent: "space-evenly",
-          width: "100%",
-        }}
-      >
-        <p>
-          <b>Event Name :&nbsp;</b>
-          {txnData ? txnData.functionFragment?.name : "Transfer Funds"}&nbsp;
-        </p>
-        <p>
-          <b>To:&nbsp;</b>
-          <Address address={item.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={12} />
-        </p>
-      </div>
     </List.Item>}
   </>
 };

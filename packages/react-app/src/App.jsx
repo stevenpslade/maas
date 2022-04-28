@@ -198,7 +198,7 @@ function App(props) {
     }
   }, [ownersMultiSigEvents, address]);
 
-  const [signaturesRequired, setSignaturesRequired] = useState(0);
+  const [signaturesRequired, setSignaturesRequired] = useState();
   const [nonce, setNonce] = useState(0);
 
   const signaturesRequiredContract = useContractReader(readContracts, contractName, "signaturesRequired");
@@ -212,8 +212,8 @@ function App(props) {
 
   useEffect(() => {
     async function getContractValues() {
-      const signaturesRequired = await readContracts.MultiSigWallet.signaturesRequired();
-      setSignaturesRequired(signaturesRequired);
+      const latestSignaturesRequired = await readContracts.MultiSigWallet.signaturesRequired();
+      setSignaturesRequired(latestSignaturesRequired);
 
       const nonce = await readContracts.MultiSigWallet.nonce();
       setNonce(nonce);
@@ -239,7 +239,7 @@ function App(props) {
   const [executeTransactionEvents, setExecuteTransactionEvents] = useState();
 
   useEffect(() => {
-    setExecuteTransactionEvents(allExecuteTransactionEvents.filter( contractEvent => contractEvent.address === currentMultiSigAddress));
+    setExecuteTransactionEvents(allExecuteTransactionEvents.filter( contractEvent => contractEvent.address === currentMultiSigAddress).reverse());
     setOwnerEvents(allOwnerEvents.filter( contractEvent => contractEvent.address === currentMultiSigAddress));
   }, [allExecuteTransactionEvents, allOwnerEvents, currentMultiSigAddress]);
 

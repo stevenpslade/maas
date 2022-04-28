@@ -17,7 +17,7 @@ export default function Home({
 }) {
   return (
     <>
-      <div style={{ padding: 32, maxWidth: 750, margin: "auto" }}>
+      <div style={{ padding: 32, maxWidth: 850, margin: "auto" }}>
         <div style={{ paddingBottom: 32 }}>
           <div>
             <Balance

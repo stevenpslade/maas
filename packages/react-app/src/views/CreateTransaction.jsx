@@ -36,6 +36,11 @@ export default function CreateTransaction({
   const [loading, setLoading] = useState(false);
   const [isWalletConnectTransaction, setIsWalletConnectTransaction] = useState(false);
 
+
+  useEffect(()=>{
+    setNewSignaturesRequired(signaturesRequired)
+  },[signaturesRequired])
+
   const showModal = () => {
     setIsModalVisible(true);
   };
