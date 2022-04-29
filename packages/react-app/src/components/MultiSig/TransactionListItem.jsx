@@ -11,29 +11,33 @@ import { parseExternalContractTransaction } from "../../helpers";
 const axios = require("axios");
 
 export default function TransactionListItem({ item, mainnetProvider, blockExplorer, price, readContracts, contractName, children }) {
-  console.log("item:", item);
+  //console.log("coming in item:", item);
   item = item.args ? item.args : item;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [txnData, setTxnData] = useState(null);
+  const [txnData, setTxnData] = useState({});
 
   const showModal = () => {
     setIsModalVisible(true);
   };
 
+
+
   useEffect(() => {
-    if (!txnData) {
+    if (!txnData[item.hash]) {
       try {
         const parsedData = item.data != "0x" ? readContracts[contractName].interface.parseTransaction(item) : null;
-        setTxnData(parsedData);
+        //console.log("SET",JSON.stringify(item),JSON.stringify(parsedData))
+        const newData = {}
+        newData[item.hash] = parsedData
+        setTxnData({...txnData,...newData});
       } catch (argumentError) {
-        console.log("ERROR", argumentError);
-
         const getParsedTransaction = async () => {
           const parsedTransaction = await parseExternalContractTransaction(item.to, item.data);
-          setTxnData(parsedTransaction);
+          const newData = {}
+          newData[item.hash] = parsedTransaction
+          setTxnData({...txnData,...newData});
         }
-
         getParsedTransaction();
       }
     }
@@ -43,21 +47,20 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
 
 
   const txDisplay = ()=>{
-
     const toSelf = (item?.to == readContracts[contractName].address)
 
-    if(toSelf && txnData?.functionFragment?.name == "addSigner")
+    if(toSelf && txnData[item.hash]?.functionFragment?.name == "addSigner")
     {
       return (
         <>
           <span style={{fontSize:16,fontWeight:"bold"}}>
             Add Signer
           </span>
-          {ethers.utils.isAddress(txnData?.args[0]) &&
-            <Address address={txnData?.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+          {ethers.utils.isAddress(txnData[item.hash]?.args[0]) &&
+            <Address address={txnData[item.hash]?.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
           }
           <span style={{fontSize:16}}>
-            with threshold {txnData?.args[1]?.toNumber()}
+            with threshold {txnData[item.hash]?.args[1]?.toNumber()}
           </span>
           <>
             {
@@ -67,18 +70,18 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
         </>
       )
     }
-    else if(toSelf && txnData?.functionFragment?.name == "removeSigner")
+    else if(toSelf && txnData[item.hash]?.functionFragment?.name == "removeSigner")
     {
       return (
         <>
           <span style={{fontSize:16,fontWeight:"bold"}}>
             Remove Signer
           </span>
-          {ethers.utils.isAddress(txnData?.args[0]) &&
-            <Address address={txnData?.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+          {ethers.utils.isAddress(txnData[item.hash]?.args[0]) &&
+            <Address address={txnData[item.hash]?.args[0]} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
           }
           <span style={{fontSize:16}}>
-            with threshold {txnData?.args[1]?.toNumber()}
+            with threshold {txnData[item.hash]?.args[1]?.toNumber()}
           </span>
           <>
             {
@@ -87,7 +90,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
           </>
         </>
       )
-    }else if(!txnData?.functionFragment?.name)
+    }else if(!txnData[item.hash]?.functionFragment?.name)
     {
       return (
         <>
@@ -104,9 +107,10 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
           </>
         </>
       )
-    }else if(txnData?.signature!="")
+    }else if(txnData[item.hash]?.signature!="")
     {
 
+      //console.log("CALL",txnData)
 
       return (
         <>
@@ -114,10 +118,10 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
             Call
           </span>
           <span style={{fontSize:16}}>
-            {txnData?.signature}
+            {txnData[item.hash]?.signature}
             <Button
               style={{margin:4}}
-              disabled={!txnData}
+              disabled={!txnData[item.hash]}
               onClick={showModal}
             >
               <EllipsisOutlined />
@@ -149,7 +153,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
             }
           </>
           <Button
-            disabled={!txnData}
+            disabled={!txnData[item.hash]}
             onClick={showModal}
           >
             <EllipsisOutlined />
@@ -165,7 +169,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
           >
             <p>
               <b>Event Name :&nbsp;</b>
-              {txnData ? txnData.functionFragment?.name : "Transfer Funds"}&nbsp;
+              {txnData ? txnData[item.hash].functionFragment?.name : "Transfer Funds"}&nbsp;
             </p>
             <p>
               <b>To:&nbsp;</b>
@@ -180,7 +184,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
   return <>
     <TransactionDetailsModal
       visible={isModalVisible}
-      txnInfo={txnData}
+      txnInfo={txnData[item.hash]}
       handleOk={() => setIsModalVisible(false)}
       handleCancel={() => setIsModalVisible(false)}
       mainnetProvider={mainnetProvider}
@@ -191,7 +195,9 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
       style={{ position: "relative", display: "flex", flexWrap: "wrap", width:800 }}
     >
       <>
-        <b style={{ padding: 16 }}>#{typeof(item.nonce)=== "number" ? item.nonce : item.nonce.toNumber()}</b>
+        <a href={blockExplorer+"tx/"+item.hash} target="_blank">
+          <b style={{ padding: 16 }}>#{typeof(item.nonce)=== "number" ? item.nonce : item.nonce.toNumber()}</b>
+        </a>
         {txDisplay()}
         <Blockie size={4} scale={8} address={item.hash} />
       </>

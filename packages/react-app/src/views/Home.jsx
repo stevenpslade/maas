@@ -58,9 +58,10 @@ export default function Home({
           bordered
           dataSource={executeTransactionEvents}
           renderItem={item => {
+            //console.log("RENDERING ITEM",item)
             return (
               <TransactionListItem
-                item={item}
+                item={Object.create(item)}
                 mainnetProvider={mainnetProvider}
                 blockExplorer={blockExplorer}
                 price={price}
