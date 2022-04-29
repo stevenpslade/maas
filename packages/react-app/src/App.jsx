@@ -54,7 +54,7 @@ const { Option } = Select;
 const { ethers } = require("ethers");
 
 /// 📡 What chain are your contracts deployed to?
-const initialNetwork = NETWORKS.mainnet; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
+const initialNetwork = NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
 const DEBUG = true;
@@ -170,13 +170,14 @@ function App(props) {
   const [currentMultiSigAddress, setCurrentMultiSigAddress] = useState();
 
 
-
+  /*
+    if you want to hardcode a specific multisig for the frontend for everyone:
   useEffect(()=>{
     if(userSigner){
       setCurrentMultiSigAddress("0x31787164D5A4ca8072035Eb89478e85f45C6d408")
     }
   },[userSigner])
-
+  */
 
 
   useEffect(() => {
@@ -315,27 +316,24 @@ function App(props) {
         USE_NETWORK_SELECTOR={USE_NETWORK_SELECTOR}
       />
       <div style={{ position: "relative" }}>
-
-        { address && address=="0x34aA3F359A9D614239015126635CE7732c18fDF3" && (
-          <div style={{ position: "absolute", left: 20 }}>
-            <CreateMultiSigModal
-              price={price}
-              selectedChainId={selectedChainId}
-              mainnetProvider={mainnetProvider}
-              address={address}
-              tx={tx}
-              writeContracts={writeContracts}
-              contractName={'MultiSigFactory'}
-              isCreateModalVisible={isCreateModalVisible}
-              setIsCreateModalVisible={setIsCreateModalVisible}
-            />
-            <Select value={[currentMultiSigAddress]} style={{ width: 120 }} onChange={handleMultiSigChange}>
-              {multiSigs.map((address, index) => (
-                <Option key={index} value={address}>{address}</Option>
-              ))}
-            </Select>
-          </div>
-        )}
+        <div style={{ position: "absolute", left: 20 }}>
+          <CreateMultiSigModal
+            price={price}
+            selectedChainId={selectedChainId}
+            mainnetProvider={mainnetProvider}
+            address={address}
+            tx={tx}
+            writeContracts={writeContracts}
+            contractName={'MultiSigFactory'}
+            isCreateModalVisible={isCreateModalVisible}
+            setIsCreateModalVisible={setIsCreateModalVisible}
+          />
+          <Select value={[currentMultiSigAddress]} style={{ width: 120 }} onChange={handleMultiSigChange}>
+            {multiSigs.map((address, index) => (
+              <Option key={index} value={address}>{address}</Option>
+            ))}
+          </Select>
+        </div>
       </div>
       <Menu disabled={!userHasMultiSigs} style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
         <Menu.Item key="/">

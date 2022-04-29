@@ -7,7 +7,7 @@ export default function Header() {
   return (
     <a href="/">
       <PageHeader
-        title="👩‍🎓 scholarship.buidlguidl.com"
+        title="👜 Forkable Multisig as a Service"
         subTitle=""
         style={{ cursor: "pointer" }}
       />
