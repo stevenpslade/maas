@@ -33,7 +33,7 @@ import {
   NetworkSwitch,
   CreateMultiSigModal,
 } from "./components";
-import { NETWORKS, ALCHEMY_KEY, BACKEND_URL } from "./constants";
+import { NETWORKS, ALCHEMY_KEY } from "./constants";
 import externalContracts from "./contracts/external_contracts";
 //import multiSigWalletABI from "./contracts/multi_sig_wallet";
 // contracts
@@ -86,6 +86,12 @@ function App(props) {
 
   const cachedNetwork = window.localStorage.getItem("network");
   const targetNetwork = NETWORKS[cachedNetwork || "mainnet"];
+
+  // backend transaction handler:
+  let BACKEND_URL = "http://localhost:49899/"
+  if(targetNetwork && targetNetwork.name && targetNetwork.name!="localhost"){
+    BACKEND_URL = "https://backend.scholarship.buidlguidl.com:49899/"
+  }
 
   // 🔭 block explorer URL
   const blockExplorer = targetNetwork.blockExplorer;
