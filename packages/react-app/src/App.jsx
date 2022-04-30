@@ -84,7 +84,8 @@ function App(props) {
   const [selectedNetwork, setSelectedNetwork] = useState(networkOptions[0]);
   const location = useLocation();
 
-  const targetNetwork = NETWORKS[selectedNetwork];
+  const cachedNetwork = window.localStorage.getItem("network");
+  const targetNetwork = NETWORKS[cachedNetwork || "mainnet"];
 
   // 🔭 block explorer URL
   const blockExplorer = targetNetwork.blockExplorer;
@@ -304,6 +305,32 @@ function App(props) {
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
 
+  const options = [];
+  for (const id in NETWORKS) {
+    options.push(
+      <Select.Option key={id} value={NETWORKS[id].name}>
+        <span style={{ color: NETWORKS[id].color }}>{NETWORKS[id].name}</span>
+      </Select.Option>,
+    );
+  }
+
+  const networkSelect = (
+    <Select
+      defaultValue={targetNetwork.name}
+      style={{ textAlign: "left", width: 170 }}
+      onChange={value => {
+        if (targetNetwork.chainId != NETWORKS[value].chainId) {
+          window.localStorage.setItem("network", value);
+          setTimeout(() => {
+            window.location.reload();
+          }, 1);
+        }
+      }}
+    >
+      {options}
+    </Select>
+  );
+
   return (
     <div className="App">
       <Header />
@@ -333,6 +360,7 @@ function App(props) {
               <Option key={index} value={address}>{address}</Option>
             ))}
           </Select>
+          {networkSelect}
         </div>
       </div>
       <Menu disabled={!userHasMultiSigs} style={{ textAlign: "center", marginTop: 40 }} selectedKeys={[location.pathname]} mode="horizontal">
