@@ -54,7 +54,7 @@ const { Option } = Select;
 const { ethers } = require("ethers");
 
 /// 📡 What chain are your contracts deployed to?
-const initialNetwork = NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
+const initialNetwork = NETWORKS.mainnet; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
 const DEBUG = true;
@@ -90,7 +90,7 @@ function App(props) {
   // backend transaction handler:
   let BACKEND_URL = "http://localhost:49899/"
   if(targetNetwork && targetNetwork.name && targetNetwork.name!="localhost"){
-    BACKEND_URL = "https://backend.scholarship.buidlguidl.com:49899/"
+    BACKEND_URL = "https://backend.multisig.lol:49899/"
   }
 
   // 🔭 block explorer URL
