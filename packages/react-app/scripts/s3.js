@@ -3,11 +3,11 @@ const fs = require("fs");
 
 const directoryName = "build";
 
-const BUCKETNAME = "scholarship.buidlguidl.com"; // <<---- SET YOUR BUCKET NAME AND CREATE aws.json ** see below vvvvvvvvvv
+const BUCKETNAME = "multisig.lol"; // <<---- SET YOUR BUCKET NAME AND CREATE aws.json ** see below vvvvvvvvvv
 
 
 const invalidation = {
- awsDistributionId: "E871X54C7EOBY",
+ awsDistributionId: "E3MT2OEGZAOJTZ",
  awsInvalidationPath: "/*"
 }
 

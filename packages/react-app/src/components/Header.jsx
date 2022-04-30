@@ -7,8 +7,8 @@ export default function Header() {
   return (
     <a href="/">
       <PageHeader
-        title="👜 Forkable Multisig as a Service"
-        subTitle=""
+        title="👛 multisig.lol"
+        subTitle={(<a href="https://github.com/austintgriffith/maas" target="_blank">please fork this</a>)}
         style={{ cursor: "pointer" }}
       />
     </a>
