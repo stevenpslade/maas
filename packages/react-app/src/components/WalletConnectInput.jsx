@@ -1,4 +1,4 @@
-import { Button, Input, Badge } from "antd"
+import { Button, Input, Badge } from "antd";
 import { CameraOutlined, QrcodeOutlined } from "@ant-design/icons";
 import WalletConnect from "@walletconnect/client";
 import QrReader from "react-qr-reader";
@@ -7,14 +7,11 @@ import { useLocalStorage } from "../hooks";
 import { parseExternalContractTransaction } from "../helpers";
 import TransactionDetailsModal from "./MultiSig/TransactionDetailsModal";
 
-const WalletConnectInput = ({
-  chainId,
-  address,
-  loadWalletConnectData,
-  mainnetProvider,
-  price,
-}) => {
+const WalletConnectInput = ({ chainId, address, loadWalletConnectData, mainnetProvider, price }) => {
   const [walletConnectConnector, setWalletConnectConnector] = useLocalStorage("walletConnectConnector");
+  const [wallectConnectConnectorSession, setWallectConnectConnectorSession] = useLocalStorage(
+    "wallectConnectConnectorSession",
+  );
   const [walletConnectUri, setWalletConnectUri] = useLocalStorage("walletConnectUri", "");
   const [isConnected, setIsConnected] = useLocalStorage("isConnected", false);
   const [peerMeta, setPeerMeta] = useLocalStorage("peerMeta");
@@ -32,10 +29,10 @@ const WalletConnectInput = ({
   }, [walletConnectUri]);
 
   useEffect(() => {
-    if (address) {
+    if (address && !isConnected) {
       resetConnection();
     }
-  }, [address]);
+  }, [address], isConnected); 
 
   const setupAndSubscribe = () => {
     const connector = setupConnector();
@@ -46,18 +43,22 @@ const WalletConnectInput = ({
   };
 
   const setupConnector = () => {
+    console.log(" 📡 Connecting to Wallet Connect....", walletConnectUri);
     let connector;
     try {
       connector = new WalletConnect({ uri: walletConnectUri });
-      return connector;
+     // return connector;
     } catch (error) {
-      console.log("setupConnector error:", error);
+      console.error("setupConnector error:", error);
+      localStorage.removeItem("walletConnectUri");
       setWalletConnectUri("");
-      return connector;
+      return;
     }
+    setWalletConnectConnector(connector);
+    return connector;
   };
 
-  const subscribeToEvents = (connector) => {
+  const subscribeToEvents = connector => {
     connector.on("session_request", (error, payload) => {
       if (error) {
         throw error;
@@ -68,7 +69,7 @@ const WalletConnectInput = ({
 
       connector.approveSession({
         accounts: [address],
-        chainId
+        chainId,
       });
 
       if (connector.connected) {
@@ -76,7 +77,7 @@ const WalletConnectInput = ({
         console.log("Session successfully connected.");
       }
     });
-
+    //
     connector.on("call_request", (error, payload) => {
       if (error) {
         throw error;
@@ -85,6 +86,7 @@ const WalletConnectInput = ({
       console.log("Event: call_request", payload);
       parseCallRequest(payload);
     });
+    //
 
     connector.on("disconnect", (error, payload) => {
       if (error) {
@@ -92,23 +94,60 @@ const WalletConnectInput = ({
       }
 
       console.log("Event: disconnect", payload);
-      resetConnection();
+       resetConnection();
     });
-  }
+  };
+  //
+  useEffect(() => {
+    if (!isConnected) {
+      let nextSession = localStorage.getItem("wallectConnectNextSession");
+      if (nextSession) {
+        localStorage.removeItem("wallectConnectNextSession");
+        console.log("FOUND A NEXT SESSION IN CACHE");
+        console.log("this is the", nextSession);
+        setWalletConnectUri(nextSession);
+      } else if (walletConnectConnector) {
+        console.log("NOT CONNECTED AND walletConnectConnector", walletConnectConnector);
+        setupConnector(walletConnectConnector);
+        setIsConnected(true);
+      } else if (walletConnectUri /*&&!walletConnectUriSaved*/) {
+        //CLEAR LOCAL STORAGE?!?
+        console.log(" old uri was", walletConnectUri);
+        console.log("clear local storage and connect...", nextSession);
+        localStorage.removeItem("walletconnect"); // lololol
+        setupConnector(
+          {
+            // Required
+            uri: walletConnectUri,
+            // Required
+          } /*,
+              {
+                // Optional
+                url: "<YOUR_PUSH_SERVER_URL>",
+                type: "fcm",
+                token: token,
+                peerMeta: true,
+                language: language,
+              }*/,
+        );
+      }
+    }
+  }, [walletConnectUri]);
 
-  const parseCallRequest = (payload) => {
+  const parseCallRequest = payload => {
     const callData = payload.params[0];
     setValue(callData.value);
     setTo(callData.to);
     setData(callData.data);
   };
+  //
 
   useEffect(() => {
     if (data && to) {
       decodeFunctionData();
     }
   }, [data]);
-
+  //
 
   const decodeFunctionData = async () => {
     try {
@@ -120,18 +159,24 @@ const WalletConnectInput = ({
       setParsedTransactionData(null);
     }
   };
-
+  //
 
   const killSession = () => {
-    console.log("ACTION", "killSession")
-    if (walletConnectConnector.connected) {
-      walletConnectConnector.killSession()
+    console.log("ACTION", "killSession");
+    if (isConnected) {
+      walletConnectConnector.killSession();
     }
-    localStorage.removeItem('walletconnect');
-    setTimeout(()=>{
-      window.location.reload(true)
-    },500)
+    resetConnection();
+    localStorage.removeItem("walletconnect");
+    localStorage.removeItem("walletConnectUri");
+    localStorage.removeItem("walletConnectConnector");
+    localStorage.setItem("wallectConnectNextSession", walletConnectUri);
+    console.log("the connection was reset");
+    setTimeout(() => {
+      window.location.reload(true);
+    }, 500);
   };
+  //
 
   const hideModal = () => setIsModalVisible(false);
 
@@ -142,7 +187,6 @@ const WalletConnectInput = ({
       value,
     });
   };
-
 
   const resetConnection = () => {
     setWalletConnectUri("");
@@ -179,7 +223,7 @@ const WalletConnectInput = ({
               if (newValue) {
                 console.log("SCAN VALUE", newValue);
                 setScan(false);
-                setWalletConnectUri(newValue)
+                setWalletConnectUri(newValue);
               }
             }}
             style={{ width: "100%" }}
@@ -191,7 +235,7 @@ const WalletConnectInput = ({
 
       <Input.Group compact>
         <Input
-          style={{ width: 'calc(100% - 31px)', marginBottom: 20 }}
+          style={{ width: "calc(100% - 31px)", marginBottom: 20 }}
           placeholder="Paste WalletConnect URI"
           disabled={isConnected}
           value={walletConnectUri}
@@ -199,7 +243,7 @@ const WalletConnectInput = ({
         />
         <Button
           disabled={isConnected}
-          onClick={ () => setScan(!scan) }
+          onClick={() => setScan(!scan)}
           icon={
             <Badge count={<CameraOutlined style={{ fontSize: 9 }} />}>
               <QrcodeOutlined style={{ fontSize: 18 }} />
@@ -208,31 +252,37 @@ const WalletConnectInput = ({
         />
       </Input.Group>
 
-      {isConnected &&
+      {isConnected && (
         <>
           <div style={{ marginTop: 10 }}>
-            <img
-              src={peerMeta.icons[0]}
-              style={{ width: 25, height: 25 }}
-            />
-            <p><a href={peerMeta.url} target="_blank">{peerMeta.url}</a></p>
+            <img src={peerMeta.icons[0]} style={{ width: 25, height: 25 }} />
+            <p>
+              <a href={peerMeta.url} target="_blank" rel="noreferrer">
+                {peerMeta.url}
+              </a>
+            </p>
           </div>
           <Button onClick={killSession} type="primary">
             Disconnect
           </Button>
         </>
-      }
-
-      { !isConnected && (
-        <div style={{cursor:"pointer"}} onClick={()=>{
-            localStorage.removeItem('walletconnect');
-            setTimeout(()=>{
-              window.location.reload(true)
-            },500)
-        }}>🗑</div>
       )}
 
-      {isModalVisible &&
+      {!isConnected && (
+        <div
+          style={{ cursor: "pointer" }}
+          onClick={() => {
+            localStorage.removeItem("walletconnect");
+            setTimeout(() => {
+              window.location.reload(true);
+            }, 500);
+          }}
+        >
+          🗑
+        </div>
+      )}
+
+      {isModalVisible && (
         <TransactionDetailsModal
           visible={isModalVisible}
           txnInfo={parsedTransactionData}
@@ -242,8 +292,8 @@ const WalletConnectInput = ({
           mainnetProvider={mainnetProvider}
           price={price}
         />
-      }
+      )}
     </>
-  )
-}
-export default WalletConnectInput
+  );
+};
+export default WalletConnectInput;
