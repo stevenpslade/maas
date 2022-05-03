@@ -8,7 +8,11 @@ export default function Header() {
     <a href="/">
       <PageHeader
         title="👛 multisig.lol"
-        subTitle={(<a href="https://github.com/austintgriffith/maas" target="_blank">please fork this</a>)}
+        subTitle={
+          <a href="https://github.com/austintgriffith/maas" target="_blank">
+            please fork this
+          </a>
+        }
         style={{ cursor: "pointer" }}
       />
     </a>
