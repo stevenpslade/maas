@@ -26,6 +26,7 @@ export default function CreateMultiSigModal({
   const [signaturesRequired, setSignaturesRequired] = useState(false);
   const [amount, setAmount] = useState("0");
   const [owners, setOwners] = useState([""]);
+  const [multipleAddress, setMultipleAddress] = useState("");
 
   useEffect(() => {
     if (address) {
@@ -142,14 +143,19 @@ export default function CreateMultiSigModal({
   };
 
   const addMultipleAddress = event => {
-    console.log("event: ", event.target.value);
     const { value } = event.target;
     const addresses = value.trim().split(",");
+    setMultipleAddress(addresses);
     let uniqueAddresses = [...new Set([...addresses])];
     // add basic validation a address should contains 0x with length of 42 chars
     uniqueAddresses = uniqueAddresses.filter(address => address.includes("0x") && address.length === 42);
 
     setOwners(uniqueAddresses);
+
+    // reset multiple address input after 500 mili seconds
+    setTimeout(() => {
+      setMultipleAddress("");
+    }, 500);
   };
 
   return (
@@ -180,7 +186,12 @@ export default function CreateMultiSigModal({
           />
         )}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <Input placeholder="Paste multiple addresses with comma" onChange={addMultipleAddress} />
+          <Input
+            placeholder="Paste multiple addresses with comma"
+            onChange={addMultipleAddress}
+            value={multipleAddress}
+          />
+
           {owners.map((owner, index) => (
             <div key={index} style={{ display: "flex", gap: "1rem" }}>
               <div style={{ width: "90%" }}>
