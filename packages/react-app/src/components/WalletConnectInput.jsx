@@ -32,7 +32,7 @@ const WalletConnectInput = ({ chainId, address, loadWalletConnectData, mainnetPr
     if (address && !isConnected) {
       resetConnection();
     }
-  }, [address], isConnected); 
+  }, [address], isConnected);
 
   const setupAndSubscribe = () => {
     const connector = setupConnector();
@@ -89,12 +89,12 @@ const WalletConnectInput = ({ chainId, address, loadWalletConnectData, mainnetPr
     //
 
     connector.on("disconnect", (error, payload) => {
+      localStorage.removeItem("walletconnect"); // lololol
+      console.log("Event: disconnect", payload);
+      resetConnection();
       if (error) {
         throw error;
       }
-
-      console.log("Event: disconnect", payload);
-       resetConnection();
     });
   };
   //
@@ -162,6 +162,7 @@ const WalletConnectInput = ({ chainId, address, loadWalletConnectData, mainnetPr
   //
 
   const killSession = () => {
+    setIsConnected(false);
     console.log("ACTION", "killSession");
     if (isConnected) {
       walletConnectConnector.killSession();
