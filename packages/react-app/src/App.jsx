@@ -329,7 +329,7 @@ function App(props) {
         multiSigsForUser = [...new Set([...importedMultiSigs[targetNetwork.name], ...multiSigsForUser])];
       }
 
-      if (multiSigsForUser.length > 0) {
+      if (multiSigsForUser.length > 0 && multiSigsForUser.length !== multiSigs.length) {
         const recentMultiSigAddress = multiSigsForUser[multiSigsForUser.length - 1];
         if (recentMultiSigAddress !== currentMultiSigAddress) setContractNameForEvent(null);
         setCurrentMultiSigAddress(recentMultiSigAddress);
