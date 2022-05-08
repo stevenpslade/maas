@@ -37,7 +37,7 @@ export default function Home({
               imageSettings={{ excavate: false }}
             />
           </div>
-          <div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
             <Address
               address={contractAddress ? contractAddress : ""}
               ensProvider={mainnetProvider}

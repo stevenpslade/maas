@@ -67,18 +67,16 @@ export default function Address(props) {
           href={etherscanLink}
           rel="noopener noreferrer"
         >
-          <Blockies seed={address.toLowerCase()} size={8} scale={2} />
+          <Blockies seed={address.toLowerCase()} size={props.blockieSize ? props.blockieSize : 8} scale={2} />
         </a>
       </span>
     );
   }
 
   return (
-    <span>
-      <span style={{ verticalAlign: "middle" }}>
-        <Blockies seed={address.toLowerCase()} size={8} scale={props.fontSize ? props.fontSize / 7 : 4} />
-      </span>
-      <span style={{ verticalAlign: "middle", paddingLeft: 5, fontSize: props.fontSize ? props.fontSize : 28 }}>
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <Blockies seed={address.toLowerCase()} size={props.blockieSize ? props.blockieSize : 8} scale={props.fontSize ? props.fontSize / 7 : 4} />
+      <span style={{paddingLeft: 5, fontSize: props.fontSize ? props.fontSize : 28 }}>
         {props.onChange ? (
           <Text editable={{ onChange: props.onChange }} copyable={{ text: address }}>
             <a
@@ -103,6 +101,6 @@ export default function Address(props) {
           </Text>
         )}
       </span>
-    </span>
+    </div>
   );
 }

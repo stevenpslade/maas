@@ -58,85 +58,59 @@ export default function Account({
 }) {
   const { currentTheme } = useThemeSwitcher();
 
-  const modalButtons = [];
-  if (web3Modal) {
-    if (web3Modal.cachedProvider) {
-      modalButtons.push(
-        <Button
-          key="logoutbutton"
-          style={{ verticalAlign: "top", marginLeft: 8, marginTop: 4 }}
-          shape="round"
-          size="large"
-          onClick={logoutOfWeb3Modal}
-        >
-          logout
-        </Button>,
-      );
-    } else {
-      modalButtons.push(
-        <Button
-          key="loginbutton"
-          style={{ verticalAlign: "top", marginLeft: 8, marginTop: 4 }}
-          shape="round"
-          size="large"
-          /* type={minimized ? "default" : "primary"}     too many people just defaulting to MM and having a bad time */
-          onClick={loadWeb3Modal}
-        >
-          connect
-        </Button>,
-      );
-    }
+  let accountButton;
+  if (web3Modal?.cachedProvider) {
+    accountButton = { name: 'Logout', action: logoutOfWeb3Modal };
+  } else {
+    accountButton = { name: 'Connect', action: loadWeb3Modal };
   }
-  const display = minimized ? (
-    ""
-  ) : (
-    <span>
-      {web3Modal && web3Modal.cachedProvider ? (
-        <>
-          {address && <Address address={address} ensProvider={mainnetProvider} blockExplorer={blockExplorer} />}
-          <Balance address={address} provider={localProvider} price={price} />
-          <Wallet
-            address={address}
-            provider={localProvider}
-            signer={userSigner}
-            ensProvider={mainnetProvider}
-            price={price}
-            color={currentTheme === "light" ? "#1890ff" : "#2caad9"}
-          />
-        </>
-      ) : useBurner ? (
-        ""
-      ) : isContract ? (
-        <>
-          {address && <Address address={address} ensProvider={mainnetProvider} blockExplorer={blockExplorer} />}
-          <Balance address={address} provider={localProvider} price={price} />
-        </>
-      ) : (
-        ""
-      )}
-      {useBurner && web3Modal && !web3Modal.cachedProvider ? (
-        <>
-          <Address address={address} ensProvider={mainnetProvider} blockExplorer={blockExplorer} />
-          <Balance address={address} provider={localProvider} price={price} />
-          <Wallet
-            address={address}
-            provider={localProvider}
-            signer={userSigner}
-            ensProvider={mainnetProvider}
-            price={price}
-            color={currentTheme === "light" ? "#1890ff" : "#2caad9"}
-          />
-        </>
-      ) : (
-        <></>
-      )}
-    </span>
-  );
 
   return (
-    <div>
-      {display}
-      {modalButtons}
+    <div style={{ display: "flex" }}>
+      <div style={{
+        border: "1px solid #d9d9d9",
+        borderRadius: "9999px",
+        paddingLeft: "0.875rem",
+        display: "flex",
+        alignItems: "center",
+      }}>
+        <Balance address={address} provider={localProvider} price={price} size={"1.125rem"} />
+        <Wallet
+          address={address}
+          provider={localProvider}
+          signer={userSigner}
+          ensProvider={mainnetProvider}
+          price={price}
+          color={currentTheme === "light" ? "#1890ff" : "#2caad9"}
+          size={"1.4rem"}
+          padding={"0px"}
+        />
+        <div style={{
+          border: "1px solid transparent",
+          borderRadius: "9999px",
+          backgroundColor: currentTheme === "light" ? "#f1f5f9" : "#262626",
+          marginLeft: "0.5rem",
+          padding: "0.375rem 0.875rem",
+        }}>
+          {address && (
+            <Address
+              address={address}
+              ensProvider={mainnetProvider}
+              blockExplorer={blockExplorer}
+              fontSize={"1.125rem"}
+              blockieSize={5}
+            />
+          )}
+        </div>
+      </div>
+      <Button
+        style={{ verticalAlign: "top", marginLeft: 8, height: "auto" }}
+        shape="round"
+        size="large"
+        onClick={accountButton.action}
+      >
+        {accountButton.name}
+      </Button>
     </div>
   );
 }
