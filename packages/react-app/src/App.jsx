@@ -25,6 +25,7 @@ import {
   FaucetHint,
   NetworkSwitch,
   CreateMultiSigModal,
+  ImportMultiSigModal,
 } from "./components";
 import { NETWORKS, ALCHEMY_KEY } from "./constants";
 import externalContracts from "./contracts/external_contracts";
@@ -32,8 +33,8 @@ import externalContracts from "./contracts/external_contracts";
 // contracts
 import deployedContracts from "./contracts/hardhat_contracts.json";
 import { Transactor, Web3ModalSetup } from "./helpers";
-import { Home, ExampleUI, Hints, Subgraph, CreateTransaction, Transactions } from "./views";
-import { useStaticJsonRPC } from "./hooks";
+import { Home, Hints, Subgraph, CreateTransaction, Transactions } from "./views";
+import { useStaticJsonRPC, useLocalStorage } from "./hooks";
 
 const { Option } = Select;
 const { ethers } = require("ethers");
@@ -303,6 +304,8 @@ function App(props) {
   const [multiSigs, setMultiSigs] = useState([]);
   const [currentMultiSigAddress, setCurrentMultiSigAddress] = useState();
 
+  const [importedMultiSigs] = useLocalStorage("importedMultiSigs");
+
   /*
     if you want to hardcode a specific multisig for the frontend for everyone:
   useEffect(()=>{
@@ -314,13 +317,17 @@ function App(props) {
 
   useEffect(() => {
     if (address) {
-      const multiSigsForUser = ownersMultiSigEvents.reduce((filtered, createEvent) => {
+      let multiSigsForUser = ownersMultiSigEvents.reduce((filtered, createEvent) => {
         if (createEvent.args.owners.includes(address) && !filtered.includes(createEvent.args.contractAddress)) {
           filtered.push(createEvent.args.contractAddress);
         }
 
         return filtered;
       }, []);
+
+      if (importedMultiSigs && importedMultiSigs[targetNetwork.name]) {
+        multiSigsForUser = [...new Set([...importedMultiSigs[targetNetwork.name], ...multiSigsForUser])];
+      }
 
       if (multiSigsForUser.length > 0) {
         const recentMultiSigAddress = multiSigsForUser[multiSigsForUser.length - 1];
@@ -455,9 +462,9 @@ function App(props) {
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
 
-  const options = [];
+  const selectNetworkOptions = [];
   for (const id in NETWORKS) {
-    options.push(
+    selectNetworkOptions.push(
       <Select.Option key={id} value={NETWORKS[id].name}>
         <span style={{ color: NETWORKS[id].color }}>{NETWORKS[id].name}</span>
       </Select.Option>,
@@ -477,7 +484,7 @@ function App(props) {
         }
       }}
     >
-      {options}
+      {selectNetworkOptions}
     </Select>
   );
 
@@ -493,26 +500,38 @@ function App(props) {
         USE_NETWORK_SELECTOR={USE_NETWORK_SELECTOR}
       />
       <div style={{ position: "relative" }}>
-        <div style={{ position: "absolute", left: 20 }}>
-          <CreateMultiSigModal
-            price={price}
-            selectedChainId={selectedChainId}
+        <div style={{ position: "absolute", left: 20, display: "flex", flexDirection: "column", alignItems: "start" }}>
+          <div>
+            <CreateMultiSigModal
+              price={price}
+              selectedChainId={selectedChainId}
+              mainnetProvider={mainnetProvider}
+              address={address}
+              tx={tx}
+              writeContracts={writeContracts}
+              contractName={"MultiSigFactory"}
+              isCreateModalVisible={isCreateModalVisible}
+              setIsCreateModalVisible={setIsCreateModalVisible}
+            />
+            <Select value={[currentMultiSigAddress]} style={{ width: 120, marginRight: 5, }} onChange={handleMultiSigChange}>
+              {multiSigs.map((address, index) => (
+                <Option key={index} value={address}>
+                  {address}
+                </Option>
+              ))}
+            </Select>
+            {networkSelect}
+          </div>
+          <ImportMultiSigModal
             mainnetProvider={mainnetProvider}
-            address={address}
-            tx={tx}
-            writeContracts={writeContracts}
-            contractName={"MultiSigFactory"}
-            isCreateModalVisible={isCreateModalVisible}
-            setIsCreateModalVisible={setIsCreateModalVisible}
+            targetNetwork={targetNetwork}
+            networkOptions={selectNetworkOptions}
+            multiSigs={multiSigs}
+            setMultiSigs={setMultiSigs}
+            setCurrentMultiSigAddress={setCurrentMultiSigAddress}
+            multiSigWalletABI={multiSigWalletABI}
+            localProvider={localProvider}
           />
-          <Select value={[currentMultiSigAddress]} style={{ width: 120 }} onChange={handleMultiSigChange}>
-            {multiSigs.map((address, index) => (
-              <Option key={index} value={address}>
-                {address}
-              </Option>
-            ))}
-          </Select>
-          {networkSelect}
         </div>
       </div>
       <Menu
