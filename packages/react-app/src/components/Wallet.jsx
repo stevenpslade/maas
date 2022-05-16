@@ -68,10 +68,10 @@ export default function Wallet(props) {
         }}
         rotate={-90}
         style={{
-          padding: 7,
+          padding: props.padding ? props.padding : 7,
           color: props.color ? props.color : "",
           cursor: "pointer",
-          fontSize: 28,
+          fontSize: props.size ? props.size : 28,
           verticalAlign: "middle",
         }}
       />
@@ -295,11 +295,9 @@ export default function Wallet(props) {
       <Modal
         visible={open}
         title={
-          <div>
+          <div style={{  display: "flex", alignItems: "center", justifyContent: "space-around" }}>
             {selectedAddress ? <Address address={selectedAddress} ensProvider={props.ensProvider} /> : <Spin />}
-            <div style={{ float: "right", paddingRight: 25 }}>
-              <Balance address={selectedAddress} provider={props.provider} dollarMultiplier={props.price} />
-            </div>
+            <Balance address={selectedAddress} provider={props.provider} dollarMultiplier={props.price} />
           </div>
         }
         onOk={() => {
