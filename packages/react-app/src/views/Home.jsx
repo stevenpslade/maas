@@ -1,7 +1,7 @@
 import React from "react";
 import { Balance, Address, TransactionListItem, Owners } from "../components";
 import QR from "qrcode.react";
-import { List, Row, Col, Button } from "antd";
+import { List, Button } from "antd";
 
 export default function Home({
   contractAddress,
@@ -58,7 +58,6 @@ export default function Home({
           bordered
           dataSource={executeTransactionEvents}
           renderItem={item => {
-            //console.log("RENDERING ITEM",item)
             return (
               <TransactionListItem
                 item={Object.create(item)}

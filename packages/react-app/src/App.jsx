@@ -384,11 +384,16 @@ function App(props) {
   const [executeTransactionEvents, setExecuteTransactionEvents] = useState();
 
   useEffect(() => {
-    setExecuteTransactionEvents(
-      allExecuteTransactionEvents.filter(contractEvent => contractEvent.address === currentMultiSigAddress).reverse(),
-    );
     setOwnerEvents(allOwnerEvents.filter(contractEvent => contractEvent.address === currentMultiSigAddress));
-  }, [allExecuteTransactionEvents, allOwnerEvents, currentMultiSigAddress]);
+  }, [allOwnerEvents, currentMultiSigAddress]);
+
+  useEffect(() => {
+    const filteredEvents = allExecuteTransactionEvents.filter(contractEvent => contractEvent.address === currentMultiSigAddress);
+    const nonceNum = typeof(nonce) === "number" ? nonce : nonce?.toNumber();
+    if (nonceNum === filteredEvents.length) {
+      setExecuteTransactionEvents(filteredEvents.reverse());
+    }
+  }, [allExecuteTransactionEvents, currentMultiSigAddress, nonce]);
 
   // EXTERNAL CONTRACT EXAMPLE:
   // If you want to bring in the mainnet DAI contract it would look like:
