@@ -11,32 +11,37 @@ import { parseExternalContractTransaction } from "../../helpers";
 const axios = require("axios");
 
 export default function TransactionListItem({ item, mainnetProvider, blockExplorer, price, readContracts, contractName, children }) {
-  //console.log("coming in item:", item);
+  const itemRaw = item
   item = item.args ? item.args : item;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [txnData, setTxnData] = useState({});
+  const [txnDate, setTxnDate] = useState("")
 
   const showModal = () => {
     setIsModalVisible(true);
   };
 
-
-
-  useEffect(() => {
+  useEffect(() => {  
     if (!txnData[item.hash]) {
       try {
+        // Fetch block timestamp
+        itemRaw.getBlock().then(response => {
+        const date = new Date(response.timestamp * 1000);
+        setTxnDate(date.toLocaleDateString())
+        })
+
         const parsedData = item.data != "0x" ? readContracts[contractName].interface.parseTransaction(item) : null;
-        //console.log("SET",JSON.stringify(item),JSON.stringify(parsedData))
+        // console.log("SET",JSON.stringify(item),JSON.stringify(parsedData))
         const newData = {}
         newData[item.hash] = parsedData
-        setTxnData({...txnData,...newData});
+        setTxnData({ ...txnData, ...newData });
       } catch (argumentError) {
         const getParsedTransaction = async () => {
           const parsedTransaction = await parseExternalContractTransaction(item.to, item.data);
           const newData = {}
           newData[item.hash] = parsedTransaction
-          setTxnData({...txnData,...newData});
+          setTxnData({ ...txnData, ...newData });
         }
         getParsedTransaction();
       }
@@ -44,9 +49,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
   }, [item]);
 
 
-
-
-  const txDisplay = ()=>{
+  const txDisplay = ()=>{ 
     const toSelf = (item?.to == readContracts[contractName].address)
 
     if(toSelf && txnData[item.hash]?.functionFragment?.name == "addSigner")
@@ -93,13 +96,9 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
     }else if(!txnData[item.hash]?.functionFragment?.name)
     {
       return (
-        <>
-          <span style={{fontSize:16,fontWeight:"bold"}}>
-            Transfer
-          </span>
-          <Balance balance={item.value ? item.value : parseEther("" + parseFloat(item.amount).toFixed(12))} dollarMultiplier={price} />
-          to
+        <>         
           <Address address={item.to} ensProvider={mainnetProvider} blockExplorer={blockExplorer} fontSize={16} />
+          <Balance balance={item.value ? item.value : parseEther("" + parseFloat(item.amount).toFixed(12))} dollarMultiplier={price} />
           <>
             {
               children
@@ -179,7 +178,7 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
         </>
       )
     }
-  }
+  } 
 
   return <>
     <TransactionDetailsModal
@@ -192,14 +191,16 @@ export default function TransactionListItem({ item, mainnetProvider, blockExplor
     />
     {<List.Item
       key={item.hash}
-      style={{ position: "relative", display: "flex", flexWrap: "wrap", width:800 }}
+      style={{ position: "relative", display: "flex", flexWrap: "wrap", alignSelf: "center", minWidth: '400px' }}
     >
       <>
-        <a href={blockExplorer+"tx/"+item.hash} target="_blank">
-          <b style={{ padding: 16 }}>#{typeof(item.nonce)=== "number" ? item.nonce : item.nonce.toNumber()}</b>
-        </a>
+          <a href={blockExplorer + "tx/" + item.hash} target="_blank">
+            <b style={{ padding: 0, fontSize: "14px" }}>
+              {item.hash?.substr(0, 7) + "..."}
+            </b> 
+            <p style={{margin: 0, fontSize: "11px"}}>{txnDate ? txnDate : ""}</p>
+        </a>       
         {txDisplay()}
-        <Blockie size={4} scale={8} address={item.hash} />
       </>
     </List.Item>}
   </>

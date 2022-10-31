@@ -27,6 +27,7 @@ export default function Transactions({
   blockExplorer,
 }) {
   const [transactions, setTransactions] = useState();
+  
   usePoller(() => {
     const getTransactions = async () => {
       const res = await axios.get(
