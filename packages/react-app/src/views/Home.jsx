@@ -2,6 +2,7 @@ import React from "react";
 import { Balance, Address, TransactionListItem, Owners } from "../components";
 import QR from "qrcode.react";
 import { List, Button } from "antd";
+import VirtualList from "rc-virtual-list"
 
 export default function Home({
   contractAddress,
@@ -54,11 +55,16 @@ export default function Home({
           window.location = "/create"
         }}>Propose Transaction</Button>
         </div>
-        <List
-          bordered
-          dataSource={executeTransactionEvents}
-          renderItem={item => {
-            return (
+        
+        <h2>Recent Transactions</h2>
+        <List>
+          <VirtualList
+            data={executeTransactionEvents}
+            height={150}
+            width={400}
+            itemKey="transaction"
+          >
+            {(item) => (
               <TransactionListItem
                 item={Object.create(item)}
                 mainnetProvider={mainnetProvider}
@@ -67,12 +73,10 @@ export default function Home({
                 readContracts={readContracts}
                 contractName={contractName}
               />
-            );
-          }}
-        />
+            )}
+          </VirtualList>
+        </List>
       </div>
-
-
     </>
   );
 }
